@@ -25,6 +25,23 @@ if ($run.ExitCode -ne 0) {
 }
 Remove-Item dist\pet_overlay.log -ErrorAction SilentlyContinue
 
+# Self-update path: the exe swaps itself for a copy, relaunches, and the copy must pass --selftest.
+$t = Join-Path ([IO.Path]::GetTempPath()) ("swaptest-" + [guid]::NewGuid())
+New-Item -ItemType Directory $t | Out-Null
+Copy-Item dist\Aion2PetOverlay.exe $t
+$run = Start-Process "$t\Aion2PetOverlay.exe" -ArgumentList "--selftest-update" -WorkingDirectory $t -Wait -PassThru
+if ($run.ExitCode -ne 0) { throw "swap test failed to start, exit code $($run.ExitCode)" }
+$deadline = (Get-Date).AddSeconds(90)
+while (-not (Select-String -Path "$t\pet_overlay.log" -Pattern "selftest (passed|failed)" -Quiet -ErrorAction SilentlyContinue)) {
+    if ((Get-Date) -gt $deadline) { break }
+    Start-Sleep 1
+}
+$log = Get-Content "$t\pet_overlay.log" -ErrorAction SilentlyContinue
+$log
+if (-not ($log -match "selftest passed") -or -not (Test-Path "$t\Aion2PetOverlay.exe.old")) {
+    throw "self-update swap test failed"
+}
+
 $hash = (Get-FileHash dist\Aion2PetOverlay.exe -Algorithm SHA256).Hash.ToLower()
 "$hash  Aion2PetOverlay.exe" | Set-Content dist\SHA256SUMS.txt -Encoding ascii
 Write-Host "OK  $hash  dist\Aion2PetOverlay.exe"

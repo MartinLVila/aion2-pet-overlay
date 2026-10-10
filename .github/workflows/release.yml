@@ -18,6 +18,13 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Check the tag matches version.py
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          $version = python -c "from version import __version__; print(__version__)"
+          if ("v$version" -ne $env:GITHUB_REF_NAME) { throw "tag $env:GITHUB_REF_NAME doesn't match version.py ($version)" }
+
       - name: Build and test the exe
         shell: pwsh
         run: ./build.ps1

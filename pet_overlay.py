@@ -13,11 +13,15 @@ Progress is saved between sessions. Drag the title bar to move, "–" collapses,
 import json
 import os
 import queue
+import sys
 import threading
 import tkinter as tk
+import webbrowser
 from tkinter import ttk
 
 import pet_protocol as proto
+import updater
+from version import __version__
 
 with open(os.path.join(proto.RES_DIR, "data", "pets.json"), encoding="utf-8") as _f:
     PETS = {int(k): v for k, v in json.load(_f).items()}
@@ -56,6 +60,8 @@ class Overlay:
         self.flash = {}  # pet id -> refresh ticks left highlighted
         self.toast_win = self.toast_job = None
         self.collapsed = False
+        self.update_info = None
+        self.updating = False
         self.ui = self.load_ui()
 
         root = self.root = tk.Tk()
@@ -79,6 +85,9 @@ class Overlay:
         for widget in (bar, self.title):
             widget.bind("<ButtonPress-1>", self.drag_start)
             widget.bind("<B1-Motion>", self.drag_move)
+        # shown only when a newer release exists; lives in the title bar so it's visible when collapsed
+        self.update_button = tk.Label(bar, bg=ACCENT, fg=BAR, font=("Segoe UI", 8, "bold"), padx=8, cursor="hand2")
+        self.update_button.bind("<Button-1>", lambda e: self.start_update())
 
         self.body = tk.Frame(root, bg=BG)
         self.body.pack(fill="both", expand=True)
@@ -167,6 +176,60 @@ class Overlay:
             proto.log("sniffer:", e)
             self.events.put(("error", f"Capture failed ({e.__class__.__name__}); try running as administrator"))
 
+    def check_for_update(self):
+        """One request to GitHub at startup; set "check_updates": false in pet_overlay_ui.json to skip it."""
+        if not self.ui.get("check_updates", True):
+            return
+
+        def worker():
+            try:
+                info = updater.check()
+            except Exception as e:
+                proto.log("update check:", e)
+                return
+            if info:
+                self.events.put(("update", info))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def start_update(self):
+        info = self.update_info
+        if not info or self.updating:
+            return
+        if not proto.FROZEN or not info.get("exe_url"):
+            webbrowser.open(info["page"])  # running from source: let the user grab it
+            return
+        self.updating = True
+        self.update_button.config(text="Downloading…", cursor="")
+
+        def worker():
+            new = sys.executable + ".new"
+            try:
+                updater.download(info, new, lambda f: self.events.put(("update_progress", f)))
+                updater.swap(sys.executable, new)
+            except Exception as e:
+                proto.log("update failed:", e)
+                self.events.put(("update_error", str(e)))
+                return
+            self.events.put(("update_ready",))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def on_update_event(self, ev):
+        if ev[0] == "update":
+            self.update_info = ev[1]
+            self.update_button.config(text=f"↑ Update to v{ev[1]['version']}")
+            self.update_button.pack(side="right", padx=(0, 4), pady=2)
+        elif ev[0] == "update_progress":
+            self.update_button.config(text=f"Downloading… {ev[1]:.0%}")
+        elif ev[0] == "update_error":
+            self.updating = False
+            self.update_button.config(text="Update failed · open page", bg="#e06c6c", cursor="hand2")
+            self.update_info = dict(self.update_info, exe_url=None)  # next click opens the release page
+        elif ev[0] == "update_ready":
+            self.quit()  # saves progress and window settings first
+            updater.restart(sys.executable)
+
     def pump(self):
         changed = False
         try:
@@ -176,6 +239,10 @@ class Overlay:
                     self.capturing = ev[1]
                 elif ev[0] == "error":
                     self.error = ev[1]
+                elif ev[0].startswith("update"):
+                    self.on_update_event(ev)
+                    if ev[0] == "update_ready":
+                        return  # window is gone
                 else:
                     self.tracker.on_event(ev)
                     if ev[0] == "gain":
@@ -347,7 +414,6 @@ class Overlay:
 
 def run_selftest():
     """`--selftest`: offline checks, also used by CI against the built exe."""
-    import sys
     import traceback
 
     import selftest
@@ -360,10 +426,26 @@ def run_selftest():
     sys.exit(0)
 
 
+def run_swap_test():
+    """`--selftest-update` (CI only): swap the running exe for a copy of itself and
+    relaunch it with --selftest, exercising the real self-update path."""
+    import shutil
+    new = sys.executable + ".new"
+    shutil.copyfile(sys.executable, new)
+    updater.swap(sys.executable, new)
+    updater.restart(sys.executable, "--selftest")
+    proto.log("swap test: relaunched")
+    sys.exit(0)
+
+
 if __name__ == "__main__":
-    import sys
     if "--selftest" in sys.argv:
         run_selftest()
+    if "--selftest-update" in sys.argv:
+        run_swap_test()
+    updater.cleanup()
+    proto.log(f"started v{__version__}")
     overlay = Overlay()
     overlay.start_capture()
+    overlay.check_for_update()
     overlay.root.mainloop()

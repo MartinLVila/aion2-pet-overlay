@@ -13,6 +13,7 @@ import lz4.block
 
 import pet_overlay
 import pet_protocol as proto
+import updater
 
 
 def varint(value):
@@ -79,15 +80,36 @@ def main():
     assert len(pet_overlay.PETS) >= 200, len(pet_overlay.PETS)
     from scapy.all import sniff  # noqa: F401  (fails if the exe is missing scapy modules)
 
-    # UI: build the window, feed it a sync and a soul, then close it
+    check_updater()
+
+    # UI: build the window, feed it a sync, a soul and an update notice, then close it
     overlay = pet_overlay.Overlay(tracker)
     overlay.events.put(events[0])
     overlay.events.put(("gain", 1005, 1))
+    overlay.events.put(("update", {"version": "9.9.9", "page": "", "exe_url": None, "sums_url": None}))
     overlay.root.after(1500, overlay.root.destroy)
     overlay.root.mainloop()
     assert (tracker.levels[1005], tracker.points[1005]) == (2, 71), (tracker.levels, tracker.points)
     assert tracker.synced
+    assert overlay.update_info["version"] == "9.9.9"
     print("OK")
+
+
+def check_updater():
+    v = updater.parse_version
+    assert v("v1.10.0") > v("v1.9.3") > v("1.9") > v("garbage")
+    assert updater.expected_hash("ABC123  Aion2PetOverlay.exe\nfff  other.txt\n") == "abc123"
+
+    # swap: the running exe becomes .old, the new one takes its name
+    d = tempfile.mkdtemp()
+    cur, new = os.path.join(d, "app.exe"), os.path.join(d, "app.exe.new")
+    for path, data in ((cur, b"old"), (new, b"new")):
+        with open(path, "wb") as f:
+            f.write(data)
+    updater.swap(cur, new)
+    assert open(cur, "rb").read() == b"new"
+    assert open(cur + ".old", "rb").read() == b"old"
+    assert not os.path.exists(new)
 
 
 if __name__ == "__main__":

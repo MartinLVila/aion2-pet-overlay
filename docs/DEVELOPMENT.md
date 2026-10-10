@@ -49,6 +49,19 @@ It fetches about one page per second, so it takes a few minutes.
   (`Aion2PetOverlay.exe --selftest`).
 - Pushing a `v*` tag makes GitHub Actions build, test and publish a release with `SHA256SUMS.txt`.
 
+## Releasing
+
+1. Bump `__version__` in `version.py` and commit.
+2. Tag and push: `git tag -a v1.2.0 -m v1.2.0 && git push origin v1.2.0`
+
+CI refuses to publish if the tag doesn't match `version.py`. It also tests the self-update path:
+the built exe swaps itself for a copy, relaunches, and the copy has to pass `--selftest`.
+
+Running copies find the release through the GitHub API at startup and show an **Update** button.
+Clicking it downloads the new exe, checks it against `SHA256SUMS.txt`, renames the running exe to
+`.old` (deleted on the next launch), moves the new one in place and restarts. Users can turn the check
+off with `"check_updates": false` in `pet_overlay_ui.json`.
+
 ## Contributing
 
 Bug reports and pull requests are welcome. Game patches can change the packet format, so if the overlay

@@ -21,6 +21,7 @@ Works on **Global** servers (EU/NA) on Windows 10 and 11.
    Already in game? Go back to character select and enter again.
 
 That's it. Your progress loads when you enter the world, and the overlay keeps count as you farm.
+When a new version is out, an **Update** button shows up in the title bar. One click and it updates itself.
 
 Play in **windowed** or **borderless** mode so the overlay can stay on top.
 
@@ -33,7 +34,8 @@ If it says **"This app has been blocked"** (Smart App Control), you can
 ## Is it safe?
 
 It only reads the data the game already sends to your PC, the same way DPS meters do. It never
-touches the game, and it doesn't connect to the internet.
+touches the game. The only thing it connects to is GitHub, once at startup, to check for updates.
+Updates are verified against a checksum before they're installed.
 
 Still, NCSOFT hasn't approved it, and their rules ban unauthorized programs.
 **Use it at your own risk.**
