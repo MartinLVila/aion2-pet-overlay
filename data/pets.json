@@ -1,0 +1,1777 @@
+{
+ "1047": {
+  "genus": "Fera",
+  "name": "Aberrant Armadon",
+  "mob": "Splendent Armadon",
+  "more": 1,
+  "lvl": 12,
+  "zone": "Eastern Cantas Valley",
+  "map": "Verteron"
+ },
+ "1118": {
+  "genus": "Fera",
+  "name": "Aberrant Bee",
+  "mob": "Black Pattern Bee",
+  "more": 4,
+  "lvl": 18,
+  "zone": "Pamos Farm",
+  "map": "Verteron"
+ },
+ "1119": {
+  "genus": "Fera",
+  "name": "Aberrant Coradon",
+  "mob": "Hill Coradon",
+  "more": 4,
+  "lvl": 39,
+  "zone": "Kraka Footpath",
+  "map": "Verteron"
+ },
+ "1021": {
+  "genus": "Fera",
+  "name": "Aberrant Odyle Spider",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1053": {
+  "genus": "Fera",
+  "name": "Aberrant Potcrab",
+  "mob": "Eternal Moss Crab",
+  "more": 1,
+  "lvl": 46,
+  "zone": "Eternal Isle",
+  "map": "Verteron"
+ },
+ "1089": {
+  "genus": "Fera",
+  "name": "Aberrant Skama",
+  "mob": "Abyss Sulfur Skama",
+  "more": 4,
+  "lvl": 51,
+  "zone": "Contaminated Marsh",
+  "map": "Chaotic Middle Reshanta"
+ },
+ "1126": {
+  "genus": "Fera",
+  "name": "Aberrant Tog",
+  "mob": "Aberrant Tog",
+  "more": 5,
+  "lvl": 32,
+  "zone": "Battlescar Mound",
+  "map": "Altgard"
+ },
+ "1125": {
+  "genus": "Fera",
+  "name": "Aberrant Zaif",
+  "mob": "Golden Zaif",
+  "more": 1,
+  "lvl": 40,
+  "zone": "Eastern Gribade Highland",
+  "map": "Altgard"
+ },
+ "1038": {
+  "genus": "Fera",
+  "name": "Airon",
+  "mob": "Canyon Airon",
+  "more": 5,
+  "lvl": 40,
+  "zone": "Eastern Gribade Highland",
+  "map": "Altgard"
+ },
+ "1046": {
+  "genus": "Fera",
+  "name": "Armadon",
+  "mob": "Withered Armadon",
+  "more": 1,
+  "lvl": 21,
+  "zone": "Moslan Forest",
+  "map": "Altgard"
+ },
+ "1198": {
+  "genus": "Fera",
+  "name": "Ashen Basilisk",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1132": {
+  "genus": "Fera",
+  "name": "Ashen Lupyllini",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1114": {
+  "genus": "Fera",
+  "name": "Ashen Spider",
+  "mob": "White Shell Octaside",
+  "more": 1,
+  "lvl": 18,
+  "zone": "Anguish Hill",
+  "map": "Verteron"
+ },
+ "1008": {
+  "genus": "Fera",
+  "name": "Baby Odyle Spider",
+  "mob": "Coastal Odyle Spider",
+  "more": 0,
+  "lvl": 16,
+  "zone": "Spirit's Rest",
+  "map": "Verteron"
+ },
+ "1163": {
+  "genus": "Fera",
+  "name": "Basilisk",
+  "mob": "Black Ash Basilisk",
+  "more": 0,
+  "lvl": 21,
+  "zone": "Moslan Forest",
+  "map": "Altgard"
+ },
+ "1181": {
+  "genus": "Fera",
+  "name": "Brax",
+  "mob": "Hungry Brax",
+  "more": 5,
+  "lvl": 18,
+  "zone": "Ellun River Meadow",
+  "map": "Verteron"
+ },
+ "1071": {
+  "genus": "Fera",
+  "name": "Cadaver Insectoid",
+  "mob": "Drana Cadaver Insectoid",
+  "more": 0,
+  "lvl": 12,
+  "zone": "Dredgion Crash Site",
+  "map": "Altgard"
+ },
+ "1041": {
+  "genus": "Fera",
+  "name": "Cave Bat",
+  "mob": "Drana Mutated Bat",
+  "more": 0,
+  "lvl": 41,
+  "zone": "Scarlet Forest",
+  "map": "Verteron"
+ },
+ "1057": {
+  "genus": "Fera",
+  "name": "Coradon",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1022": {
+  "genus": "Fera",
+  "name": "Crasaur",
+  "mob": "Eternal Crasaur",
+  "more": 4,
+  "lvl": 49,
+  "zone": "Eternal Isle",
+  "map": "Verteron"
+ },
+ "1039": {
+  "genus": "Fera",
+  "name": "Crestlich",
+  "mob": "Ellun River Crestlich Female",
+  "more": 2,
+  "lvl": 18,
+  "zone": "Ellun River Midstream",
+  "map": "Verteron"
+ },
+ "1014": {
+  "genus": "Fera",
+  "name": "Drakan Guard Dog",
+  "mob": "Nahid Drakan Guard Dog",
+  "more": 5,
+  "lvl": 45,
+  "zone": "Nahid Brigade Fortress",
+  "map": "Verteron"
+ },
+ "1099": {
+  "genus": "Fera",
+  "name": "Elite Karnif",
+  "mob": "Crimson Blizzard Renulf",
+  "more": 0,
+  "lvl": 80,
+  "zone": "Nephra Snowfield",
+  "map": "Morheim"
+ },
+ "1032": {
+  "genus": "Fera",
+  "name": "Elite Keneire",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1043": {
+  "genus": "Fera",
+  "name": "Elite Ursus",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1134": {
+  "genus": "Fera",
+  "name": "Eternal Coradon",
+  "mob": "Abyss Eternal Coradon",
+  "more": 2,
+  "lvl": 52,
+  "zone": "Distorted Old Growth Forest",
+  "map": "Chaotic Middle Reshanta"
+ },
+ "1199": {
+  "genus": "Fera",
+  "name": "Flame Barghest",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1004": {
+  "genus": "Fera",
+  "name": "Fossa",
+  "mob": "Patrolling Fossa",
+  "more": 2,
+  "lvl": 25,
+  "zone": "Southern Tolbas Forest",
+  "map": "Verteron"
+ },
+ "1059": {
+  "genus": "Fera",
+  "name": "Giant Bee",
+  "mob": "Giant Stripe Bee",
+  "more": 0,
+  "lvl": 27,
+  "zone": "Pilgrim's Ridge",
+  "map": "Verteron"
+ },
+ "1034": {
+  "genus": "Fera",
+  "name": "Giant Sparkie",
+  "mob": "Highland Giant Odyle Sparkie",
+  "more": 5,
+  "lvl": 33,
+  "zone": "Southern Altamia Highland",
+  "map": "Verteron"
+ },
+ "1055": {
+  "genus": "Fera",
+  "name": "Grave Rat",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1015": {
+  "genus": "Fera",
+  "name": "Kailin",
+  "mob": "Kailin",
+  "more": 3,
+  "lvl": 20,
+  "zone": "Battlescar Mound",
+  "map": "Altgard"
+ },
+ "1097": {
+  "genus": "Fera",
+  "name": "Karnif",
+  "mob": "Tamed Karnif",
+  "more": 6,
+  "lvl": 40,
+  "zone": "Kraka Footpath",
+  "map": "Verteron"
+ },
+ "1009": {
+  "genus": "Fera",
+  "name": "Kernon",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1036": {
+  "genus": "Fera",
+  "name": "Lupyllini",
+  "mob": "Tail Feather Lupyllini",
+  "more": 0,
+  "lvl": 34,
+  "zone": "Eastern Altamia Highland",
+  "map": "Verteron"
+ },
+ "1037": {
+  "genus": "Fera",
+  "name": "Male Crestlich",
+  "mob": "Ellun River Crestlich Male",
+  "more": 1,
+  "lvl": 18,
+  "zone": "Ellun River Midstream",
+  "map": "Verteron"
+ },
+ "1098": {
+  "genus": "Fera",
+  "name": "Modified Karnif",
+  "mob": "Abyss Search Party Karnif",
+  "more": 11,
+  "lvl": 53,
+  "zone": "Black Fragments Area - Kration Conflict Zone",
+  "map": "Chaotic Lower Reshanta"
+ },
+ "1025": {
+  "genus": "Fera",
+  "name": "Mutated Aberrant Odyle Spider",
+  "mob": "Unstable Ashen Spider",
+  "more": 3,
+  "lvl": 48,
+  "zone": "Spirit Isle",
+  "map": "Altgard"
+ },
+ "1130": {
+  "genus": "Fera",
+  "name": "Mutated Cadaver Insectoid",
+  "mob": "Ridge Spider",
+  "more": 0,
+  "lvl": 27,
+  "zone": "Pilgrim's Ridge",
+  "map": "Verteron"
+ },
+ "1145": {
+  "genus": "Fera",
+  "name": "Mutated Insectoid Valka",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1143": {
+  "genus": "Fera",
+  "name": "Mutated Ursus",
+  "mob": "Ashen Ursus",
+  "more": 0,
+  "lvl": 21,
+  "zone": "Moslan Forest",
+  "map": "Altgard"
+ },
+ "1066": {
+  "genus": "Fera",
+  "name": "Papis",
+  "mob": "Faded Papis",
+  "more": 12,
+  "lvl": 40,
+  "zone": "Southern Gribade Highland",
+  "map": "Altgard"
+ },
+ "1007": {
+  "genus": "Fera",
+  "name": "Potcrab",
+  "mob": "Moss Crab",
+  "more": 5,
+  "lvl": 32,
+  "zone": "Dranactus",
+  "map": "Altgard"
+ },
+ "1067": {
+  "genus": "Fera",
+  "name": "Scorpion",
+  "mob": "Contaminated Scorpion",
+  "more": 1,
+  "lvl": 36,
+  "zone": "Contaminated Sanctum",
+  "map": "Verteron"
+ },
+ "1035": {
+  "genus": "Fera",
+  "name": "Skama",
+  "mob": "Foul Skama",
+  "more": 2,
+  "lvl": 14,
+  "zone": "Contaminated Marsh",
+  "map": "Verteron"
+ },
+ "1011": {
+  "genus": "Fera",
+  "name": "Skyray",
+  "mob": "Tolbas Forest Lake Skyray",
+  "more": 11,
+  "lvl": 25,
+  "zone": "Eastern Tolbas Forest",
+  "map": "Verteron"
+ },
+ "1016": {
+  "genus": "Fera",
+  "name": "Slink",
+  "mob": "Abyss Slink",
+  "more": 10,
+  "lvl": 51,
+  "zone": "Distorted Old Growth Forest",
+  "map": "Chaotic Middle Reshanta"
+ },
+ "1006": {
+  "genus": "Fera",
+  "name": "Sparkie",
+  "mob": "Aullaeu Forest Sparkie",
+  "more": 5,
+  "lvl": 27,
+  "zone": "Aullaeu Village",
+  "map": "Verteron"
+ },
+ "1083": {
+  "genus": "Fera",
+  "name": "Spider",
+  "mob": "Abyss Odyle Mutated Insectoid",
+  "more": 3,
+  "lvl": 50,
+  "zone": "Archipelago of Siel's Wings - Siel's Left Wing",
+  "map": "Chaotic Lower Reshanta"
+ },
+ "1060": {
+  "genus": "Fera",
+  "name": "Starturtle",
+  "mob": "Eternal Starturtle",
+  "more": 5,
+  "lvl": 49,
+  "zone": "Eternal Isle",
+  "map": "Verteron"
+ },
+ "1045": {
+  "genus": "Fera",
+  "name": "Sylphen",
+  "mob": "Highland Sylphen",
+  "more": 6,
+  "lvl": 32,
+  "zone": "Ruberein Highland",
+  "map": "Eltnen"
+ },
+ "1203": {
+  "genus": "Fera",
+  "name": "Tamed Karnif",
+  "mob": "Tamed Blades Beast",
+  "more": 1,
+  "lvl": 37,
+  "zone": "Western Gribade Highland",
+  "map": "Altgard"
+ },
+ "1189": {
+  "genus": "Fera",
+  "name": "Tamed Zaif",
+  "mob": "Tamed Zaif",
+  "more": 5,
+  "lvl": 52,
+  "zone": "Distorted Old Growth Forest",
+  "map": "Chaotic Middle Reshanta"
+ },
+ "1106": {
+  "genus": "Fera",
+  "name": "Tayga",
+  "mob": "Search Party Tayga",
+  "more": 2,
+  "lvl": 40,
+  "zone": "Eastern Gribade Highland",
+  "map": "Altgard"
+ },
+ "1072": {
+  "genus": "Fera",
+  "name": "Tog",
+  "mob": "Tog",
+  "more": 0,
+  "lvl": 18,
+  "zone": "Silent Hill",
+  "map": "Altgard"
+ },
+ "1117": {
+  "genus": "Fera",
+  "name": "Unstable Spider",
+  "mob": "Flame Rock Spider",
+  "more": 4,
+  "lvl": 27,
+  "zone": "Purifying Forest",
+  "map": "Altgard"
+ },
+ "1042": {
+  "genus": "Fera",
+  "name": "Ursus",
+  "mob": "Ursus",
+  "more": 6,
+  "lvl": 32,
+  "zone": "Battlescar Mound",
+  "map": "Altgard"
+ },
+ "1158": {
+  "genus": "Fera",
+  "name": "Venomous Insect Sram",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1188": {
+  "genus": "Fera",
+  "name": "Vivel",
+  "mob": "Vampire Vivel",
+  "more": 1,
+  "lvl": 14,
+  "zone": "Nameless Cemetery",
+  "map": "Altgard"
+ },
+ "1116": {
+  "genus": "Fera",
+  "name": "Withered Branch Spider",
+  "mob": "Withered Branch Spider",
+  "more": 6,
+  "lvl": 13,
+  "zone": "Southern Gribade Highland",
+  "map": "Altgard"
+ },
+ "1120": {
+  "genus": "Fera",
+  "name": "Young Kailin",
+  "mob": "Ellun River Young Kailin",
+  "more": 3,
+  "lvl": 18,
+  "zone": "Ellun River Midstream",
+  "map": "Verteron"
+ },
+ "1121": {
+  "genus": "Fera",
+  "name": "Young Slink",
+  "mob": "Young Wetland Slink",
+  "more": 5,
+  "lvl": 18,
+  "zone": "Ellun River Midstream",
+  "map": "Verteron"
+ },
+ "1122": {
+  "genus": "Fera",
+  "name": "Young Tog",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1123": {
+  "genus": "Fera",
+  "name": "Young Ursus",
+  "mob": "Young Ursus",
+  "more": 3,
+  "lvl": 17,
+  "zone": "Battlescar Mound",
+  "map": "Altgard"
+ },
+ "1124": {
+  "genus": "Fera",
+  "name": "Zaif",
+  "mob": "Highland Forest Zaif",
+  "more": 3,
+  "lvl": 35,
+  "zone": "Eastern Altamia Highland",
+  "map": "Verteron"
+ },
+ "1207": {
+  "genus": "Natura",
+  "name": "Agrint",
+  "mob": "Mutated Elim",
+  "more": 12,
+  "lvl": 22,
+  "zone": "Moslan Forest",
+  "map": "Altgard"
+ },
+ "1177": {
+  "genus": "Natura",
+  "name": "Ancient Spirit",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1208": {
+  "genus": "Natura",
+  "name": "Ashen Agrint",
+  "mob": "Unstable Agrint",
+  "more": 0,
+  "lvl": 48,
+  "zone": "Spirit Isle",
+  "map": "Altgard"
+ },
+ "1135": {
+  "genus": "Natura",
+  "name": "Ashen Dionae",
+  "mob": "Ashen Dionae",
+  "more": 0,
+  "lvl": 21,
+  "zone": "Moslan Forest",
+  "map": "Altgard"
+ },
+ "1058": {
+  "genus": "Natura",
+  "name": "Black Smoke Murute",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1214": {
+  "genus": "Natura",
+  "name": "Black Spirit",
+  "mob": "Abyss Corrupted Spirit",
+  "more": 4,
+  "lvl": 48,
+  "zone": "Reshanta's Root",
+  "map": "Chaotic Lower Reshanta"
+ },
+ "1081": {
+  "genus": "Natura",
+  "name": "Dionae",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1131": {
+  "genus": "Natura",
+  "name": "Drana Spore",
+  "mob": "Crimson Mutated Spore",
+  "more": 0,
+  "lvl": 47,
+  "zone": "Crimson Isle",
+  "map": "Verteron"
+ },
+ "1102": {
+  "genus": "Natura",
+  "name": "Dried Up Forest Guardian",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1210": {
+  "genus": "Natura",
+  "name": "Dry Leaf Agrint",
+  "mob": "Twilight Dry Leaf Agrint",
+  "more": 2,
+  "lvl": 53,
+  "zone": null,
+  "map": null
+ },
+ "1190": {
+  "genus": "Natura",
+  "name": "Elite Poisonous Spore Fungen",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1133": {
+  "genus": "Natura",
+  "name": "Forest Dionae",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1101": {
+  "genus": "Natura",
+  "name": "Forest Guardian",
+  "mob": "Enraged Forest Guardian",
+  "more": 3,
+  "lvl": 50,
+  "zone": "Distorted Old Growth Forest",
+  "map": "Chaotic Middle Reshanta"
+ },
+ "1003": {
+  "genus": "Natura",
+  "name": "Forest Specter",
+  "mob": "Tainted Vine Specter",
+  "more": 1,
+  "lvl": 44,
+  "zone": "Garden of the Illusion God",
+  "map": "Verteron"
+ },
+ "1048": {
+  "genus": "Natura",
+  "name": "Forest Spirit",
+  "mob": "Marsh Vine Spirit",
+  "more": 4,
+  "lvl": 13,
+  "zone": "Ellun River Marsh",
+  "map": "Verteron"
+ },
+ "1086": {
+  "genus": "Natura",
+  "name": "Fungen",
+  "mob": "Red Cap Fungen",
+  "more": 0,
+  "lvl": 12,
+  "zone": "Eastern Cantas Valley",
+  "map": "Verteron"
+ },
+ "1012": {
+  "genus": "Natura",
+  "name": "Fungie",
+  "mob": "Red Cap Fungie",
+  "more": 0,
+  "lvl": 12,
+  "zone": "Eastern Cantas Valley",
+  "map": "Verteron"
+ },
+ "1050": {
+  "genus": "Natura",
+  "name": "Gravi",
+  "mob": "Tolbas Gravi",
+  "more": 2,
+  "lvl": 24,
+  "zone": "Northern Tolbas Forest",
+  "map": "Verteron"
+ },
+ "1165": {
+  "genus": "Natura",
+  "name": "Intermediate Earth Spirit",
+  "mob": "Violent Earth Spirit",
+  "more": 2,
+  "lvl": 51,
+  "zone": "Eternal Isle",
+  "map": "Verteron"
+ },
+ "1187": {
+  "genus": "Natura",
+  "name": "Intermediate Fire Spirit",
+  "mob": "Immortal Fire Spirit",
+  "more": 2,
+  "lvl": 51,
+  "zone": "Immortal Isle",
+  "map": "Altgard"
+ },
+ "1169": {
+  "genus": "Natura",
+  "name": "Intermediate Water Spirit",
+  "mob": "Wandering Water Spirit",
+  "more": 3,
+  "lvl": 45,
+  "zone": "Garden of the Illusion God",
+  "map": "Verteron"
+ },
+ "1094": {
+  "genus": "Natura",
+  "name": "Intermediate Wind Spirit",
+  "mob": "Immortal Wind Spirit",
+  "more": 2,
+  "lvl": 51,
+  "zone": "Immortal Isle",
+  "map": "Altgard"
+ },
+ "1031": {
+  "genus": "Natura",
+  "name": "Konutin Worker",
+  "mob": "Tolbas Konutin Worker",
+  "more": 0,
+  "lvl": 24,
+  "zone": "Northern Tolbas Forest",
+  "map": "Verteron"
+ },
+ "1052": {
+  "genus": "Natura",
+  "name": "Large Leaf Gravi",
+  "mob": "Large Leaf Gravi",
+  "more": 2,
+  "lvl": 44,
+  "zone": "Garden of the Illusion God",
+  "map": "Verteron"
+ },
+ "1164": {
+  "genus": "Natura",
+  "name": "Lesser Earth Spirit",
+  "mob": "Eternal Earth Spirit",
+  "more": 0,
+  "lvl": 51,
+  "zone": "Eternal Isle",
+  "map": "Verteron"
+ },
+ "1213": {
+  "genus": "Natura",
+  "name": "Lesser Fire Spirit",
+  "mob": "Eternal Fire Spirit",
+  "more": 1,
+  "lvl": 51,
+  "zone": "Eternal Isle",
+  "map": "Verteron"
+ },
+ "1168": {
+  "genus": "Natura",
+  "name": "Lesser Water Spirit",
+  "mob": "Eternal Water Spirit",
+  "more": 1,
+  "lvl": 51,
+  "zone": "Eternal Isle",
+  "map": "Verteron"
+ },
+ "1092": {
+  "genus": "Natura",
+  "name": "Lesser Wind Spirit",
+  "mob": "Soft Breeze Spirit",
+  "more": 2,
+  "lvl": 26,
+  "zone": "Purifying Forest",
+  "map": "Altgard"
+ },
+ "1051": {
+  "genus": "Natura",
+  "name": "Magic Gravi",
+  "mob": "Unstable Gravi",
+  "more": 3,
+  "lvl": 46,
+  "zone": "Spirit Isle",
+  "map": "Altgard"
+ },
+ "1144": {
+  "genus": "Natura",
+  "name": "Mutated Forest Guardian",
+  "mob": "Unstable Forest Guardian",
+  "more": 1,
+  "lvl": 48,
+  "zone": "Spirit Isle",
+  "map": "Altgard"
+ },
+ "1049": {
+  "genus": "Natura",
+  "name": "Mutated Forest Spirit",
+  "mob": "Contaminated Vine Bundle",
+  "more": 2,
+  "lvl": 37,
+  "zone": "Contaminated Sanctum",
+  "map": "Verteron"
+ },
+ "1073": {
+  "genus": "Natura",
+  "name": "Nepenthes",
+  "mob": "Tolbas Nepenthes",
+  "more": 4,
+  "lvl": 24,
+  "zone": "Northern Tolbas Forest",
+  "map": "Verteron"
+ },
+ "1127": {
+  "genus": "Natura",
+  "name": "Odyle Stone Spirit",
+  "mob": "Faded Odyle Spirit",
+  "more": 0,
+  "lvl": 46,
+  "zone": "Spirit Isle",
+  "map": "Altgard"
+ },
+ "1136": {
+  "genus": "Natura",
+  "name": "Rafflesia",
+  "mob": "Crimson Rafflesia",
+  "more": 5,
+  "lvl": 47,
+  "zone": "Crimson Isle",
+  "map": "Verteron"
+ },
+ "1091": {
+  "genus": "Natura",
+  "name": "Red Spark Ignus",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1178": {
+  "genus": "Natura",
+  "name": "Spirit King's Bodyguard Warrior",
+  "mob": "Spirit King's Bodyguard Warrior",
+  "more": 1,
+  "lvl": 54,
+  "zone": "Distorted Old Growth Forest",
+  "map": "Chaotic Middle Reshanta"
+ },
+ "1069": {
+  "genus": "Natura",
+  "name": "Stone Spirit",
+  "mob": "Twilight Odyle Stone Spirit",
+  "more": 4,
+  "lvl": 52,
+  "zone": null,
+  "map": null
+ },
+ "1166": {
+  "genus": "Natura",
+  "name": "Superior Earth Spirit",
+  "mob": "Peculiar Rock Spirit",
+  "more": 2,
+  "lvl": 45,
+  "zone": "Garden of the Illusion God",
+  "map": "Verteron"
+ },
+ "1096": {
+  "genus": "Natura",
+  "name": "Superior Fire Spirit",
+  "mob": "Hellfire Spirit",
+  "more": 3,
+  "lvl": 45,
+  "zone": "Garden of the Illusion God",
+  "map": "Verteron"
+ },
+ "1155": {
+  "genus": "Natura",
+  "name": "Superior Water Spirit",
+  "mob": "Water Mist Spirit",
+  "more": 3,
+  "lvl": 29,
+  "zone": "Purifying Forest",
+  "map": "Altgard"
+ },
+ "1095": {
+  "genus": "Natura",
+  "name": "Superior Wind Spirit",
+  "mob": "Immortal Wind Spirit Guardian",
+  "more": 2,
+  "lvl": 51,
+  "zone": "Immortal Isle",
+  "map": "Altgard"
+ },
+ "1209": {
+  "genus": "Natura",
+  "name": "Thin Agrint",
+  "mob": "Crimson Agrint",
+  "more": 6,
+  "lvl": 46,
+  "zone": "Crimson Isle",
+  "map": "Verteron"
+ },
+ "1100": {
+  "genus": "Natura",
+  "name": "Ultimate Earth Spirit",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1082": {
+  "genus": "Natura",
+  "name": "Ultimate Fire Spirit",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1090": {
+  "genus": "Natura",
+  "name": "Ultimate Water Spirit",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1079": {
+  "genus": "Natura",
+  "name": "Ultimate Wind Spirit",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1027": {
+  "genus": "Natura",
+  "name": "Withered Agrint",
+  "mob": "Withered Sulfur Agrint",
+  "more": 2,
+  "lvl": 46,
+  "zone": "Sulfur Tree Island - Branding Island",
+  "map": "Chaotic Lower Reshanta"
+ },
+ "1219": {
+  "genus": "Natura",
+  "name": "Zelophi",
+  "mob": "Abyss Zelophi",
+  "more": 7,
+  "lvl": 51,
+  "zone": "Archipelago of Siel's Wings - Siel's Right Wing",
+  "map": "Chaotic Lower Reshanta"
+ },
+ "1110": {
+  "genus": "Varian",
+  "name": "Blue Kalgolem",
+  "mob": "Abyss Blue Kalgolem",
+  "more": 6,
+  "lvl": 52,
+  "zone": "Distorted Old Growth Forest",
+  "map": "Chaotic Middle Reshanta"
+ },
+ "1157": {
+  "genus": "Varian",
+  "name": "Cadaver Cleaner",
+  "mob": "Ferocious Cadaver Cleaner",
+  "more": 2,
+  "lvl": 34,
+  "zone": "Basfelt Ruins",
+  "map": "Altgard"
+ },
+ "1217": {
+  "genus": "Varian",
+  "name": "Congealed Drana",
+  "mob": "Congealed Drana",
+  "more": 0,
+  "lvl": 12,
+  "zone": "Dredgion Crash Site",
+  "map": "Altgard"
+ },
+ "1062": {
+  "genus": "Varian",
+  "name": "Contaminated Slime",
+  "mob": "Marsh Slime",
+  "more": 5,
+  "lvl": 13,
+  "zone": "Ellun River Marsh",
+  "map": "Verteron"
+ },
+ "1216": {
+  "genus": "Varian",
+  "name": "Dark Spirit",
+  "mob": "Wandering Dark Spirit",
+  "more": 1,
+  "lvl": 45,
+  "zone": "Garden of the Illusion God",
+  "map": "Verteron"
+ },
+ "1142": {
+  "genus": "Varian",
+  "name": "Distorted Mutant",
+  "mob": "Consumed Spirit Guardian",
+  "more": 0,
+  "lvl": 30,
+  "zone": "Purifying Forest",
+  "map": "Altgard"
+ },
+ "1056": {
+  "genus": "Varian",
+  "name": "Drakan Probe",
+  "mob": "Drana Processing Maintenance Machine",
+  "more": 5,
+  "lvl": 41,
+  "zone": "Drana Processing Area",
+  "map": "Verteron"
+ },
+ "1148": {
+  "genus": "Varian",
+  "name": "Drakana Kalgolem",
+  "mob": "Crash Site Kalgolem",
+  "more": 0,
+  "lvl": 11,
+  "zone": "Dredgion Crash Site",
+  "map": "Altgard"
+ },
+ "1160": {
+  "genus": "Varian",
+  "name": "Drana Contaminant",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1179": {
+  "genus": "Varian",
+  "name": "Drana Mutant",
+  "mob": "Twisted Mutant",
+  "more": 0,
+  "lvl": 10,
+  "zone": "Dredgion Crash Site",
+  "map": "Altgard"
+ },
+ "1153": {
+  "genus": "Varian",
+  "name": "Drana Mutant Brute",
+  "mob": "Eternal Drana Mutant",
+  "more": 2,
+  "lvl": 50,
+  "zone": "Eternal Isle",
+  "map": "Verteron"
+ },
+ "1174": {
+  "genus": "Varian",
+  "name": "Drana Predator",
+  "mob": "Drana Predator",
+  "more": 1,
+  "lvl": 12,
+  "zone": "Dredgion Crash Site",
+  "map": "Altgard"
+ },
+ "1128": {
+  "genus": "Varian",
+  "name": "Drana Slime",
+  "mob": "Drana Slime",
+  "more": 0,
+  "lvl": 11,
+  "zone": "Dredgion Crash Site",
+  "map": "Altgard"
+ },
+ "1129": {
+  "genus": "Varian",
+  "name": "Drana Swarm",
+  "mob": "Crimson Drana Swarm",
+  "more": 0,
+  "lvl": 46,
+  "zone": "Crimson Isle",
+  "map": "Verteron"
+ },
+ "1173": {
+  "genus": "Varian",
+  "name": "Duduka Trebuchet Worker",
+  "mob": "Duduka Slinger",
+  "more": 0,
+  "lvl": 42,
+  "zone": "Black Claw Village",
+  "map": "Altgard"
+ },
+ "1172": {
+  "genus": "Varian",
+  "name": "Duduka Worker",
+  "mob": "Duduka Worker",
+  "more": 0,
+  "lvl": 41,
+  "zone": "Black Claw Village",
+  "map": "Altgard"
+ },
+ "1206": {
+  "genus": "Varian",
+  "name": "Elite Guardite",
+  "mob": "Divine Ansas",
+  "more": 0,
+  "lvl": 45,
+  "zone": "Contaminated Sanctum",
+  "map": "Verteron"
+ },
+ "1182": {
+  "genus": "Varian",
+  "name": "Elite Soulless Corpse Gnat",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1218": {
+  "genus": "Varian",
+  "name": "Faded Drana",
+  "mob": "Faded Chunk",
+  "more": 0,
+  "lvl": 35,
+  "zone": "Fafnite Deposit",
+  "map": "Altgard"
+ },
+ "1161": {
+  "genus": "Varian",
+  "name": "Faded Floater",
+  "mob": "Faded Floater",
+  "more": 0,
+  "lvl": 35,
+  "zone": "Fafnite Deposit",
+  "map": "Altgard"
+ },
+ "1180": {
+  "genus": "Varian",
+  "name": "Faded Mutant",
+  "mob": "Abyss Drana Mutant",
+  "more": 6,
+  "lvl": 53,
+  "zone": "Red Thorn Crown Isle",
+  "map": "Chaotic Upper Reshanta"
+ },
+ "1154": {
+  "genus": "Varian",
+  "name": "Faded Mutant Brute",
+  "mob": "Abyss Giant Mutant",
+  "more": 3,
+  "lvl": 53,
+  "zone": "Contaminated Marsh",
+  "map": "Chaotic Middle Reshanta"
+ },
+ "1175": {
+  "genus": "Varian",
+  "name": "Faded Predator",
+  "mob": "Faded Predator",
+  "more": 0,
+  "lvl": 35,
+  "zone": "Fafnite Deposit",
+  "map": "Altgard"
+ },
+ "1167": {
+  "genus": "Varian",
+  "name": "Flame Stone Guardian Statue",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1140": {
+  "genus": "Varian",
+  "name": "Forest Monster",
+  "mob": "Burned Forester",
+  "more": 1,
+  "lvl": 21,
+  "zone": "Moslan Forest",
+  "map": "Altgard"
+ },
+ "1146": {
+  "genus": "Varian",
+  "name": "Gatekeeper Pinopi",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1194": {
+  "genus": "Varian",
+  "name": "Guardite",
+  "mob": "Uncontrollable Guardite",
+  "more": 0,
+  "lvl": 36,
+  "zone": "Contaminated Sanctum",
+  "map": "Verteron"
+ },
+ "1077": {
+  "genus": "Varian",
+  "name": "Harcon",
+  "mob": "Enhanced Harcon",
+  "more": 2,
+  "lvl": 70,
+  "zone": null,
+  "map": null
+ },
+ "1084": {
+  "genus": "Varian",
+  "name": "Kalgolem",
+  "mob": "Ashen Kalgolem",
+  "more": 4,
+  "lvl": 34,
+  "zone": "Destroyed Temple Site",
+  "map": "Verteron"
+ },
+ "1028": {
+  "genus": "Varian",
+  "name": "Krao Mutant",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1107": {
+  "genus": "Varian",
+  "name": "Krao Seal Guardian",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1068": {
+  "genus": "Varian",
+  "name": "Krao Test Subject",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1141": {
+  "genus": "Varian",
+  "name": "Marsh Targon",
+  "mob": "Abyss Marsh Targon",
+  "more": 4,
+  "lvl": 52,
+  "zone": "Contaminated Marsh",
+  "map": "Chaotic Middle Reshanta"
+ },
+ "1176": {
+  "genus": "Varian",
+  "name": "Mudthorn",
+  "mob": "Remnant of Subspace",
+  "more": 1,
+  "lvl": 44,
+  "zone": "Impetusium Square",
+  "map": "Altgard"
+ },
+ "1064": {
+  "genus": "Varian",
+  "name": "Oculazen",
+  "mob": "Oculazen",
+  "more": 1,
+  "lvl": 44,
+  "zone": "Impetusium Square",
+  "map": "Altgard"
+ },
+ "1159": {
+  "genus": "Varian",
+  "name": "Parasite Swarm",
+  "mob": "Giant Ore Insectoid Adult",
+  "more": 0,
+  "lvl": 36,
+  "zone": "Fafnite Deposit",
+  "map": "Altgard"
+ },
+ "1087": {
+  "genus": "Varian",
+  "name": "Pino",
+  "mob": "Pino Worker",
+  "more": 1,
+  "lvl": 27,
+  "zone": "Aullaeu Village",
+  "map": "Verteron"
+ },
+ "1088": {
+  "genus": "Varian",
+  "name": "Pino Worker",
+  "mob": "Harsh Pino Worker",
+  "more": 0,
+  "lvl": 28,
+  "zone": "Aullaeu Village",
+  "map": "Verteron"
+ },
+ "1186": {
+  "genus": "Varian",
+  "name": "Poison Blood",
+  "mob": "Unstable Poison Blood",
+  "more": 1,
+  "lvl": 47,
+  "zone": "Spirit Isle",
+  "map": "Altgard"
+ },
+ "1192": {
+  "genus": "Varian",
+  "name": "Silver Blade Rotan",
+  "mob": "Abyss Old Blade Rotan",
+  "more": 5,
+  "lvl": 46,
+  "zone": "Black Fragments Area - Kibelium Fragment",
+  "map": "Chaotic Lower Reshanta"
+ },
+ "1061": {
+  "genus": "Varian",
+  "name": "Slime",
+  "mob": "Unruly Slime",
+  "more": 0,
+  "lvl": 29,
+  "zone": "Purifying Forest",
+  "map": "Altgard"
+ },
+ "1183": {
+  "genus": "Varian",
+  "name": "Soulless Corpse Gnat",
+  "mob": "Soulless Corpse Gnat",
+  "more": 0,
+  "lvl": 33,
+  "zone": "Basfelt Ruins",
+  "map": "Altgard"
+ },
+ "1139": {
+  "genus": "Varian",
+  "name": "Swamp Monster",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1013": {
+  "genus": "Varian",
+  "name": "Swarm",
+  "mob": "Abyss Swarm",
+  "more": 7,
+  "lvl": 50,
+  "zone": "Contaminated Marsh",
+  "map": "Chaotic Middle Reshanta"
+ },
+ "1063": {
+  "genus": "Varian",
+  "name": "Vigilant Oculazen",
+  "mob": "Vigilant Oculazen",
+  "more": 0,
+  "lvl": 32,
+  "zone": "Dranactus",
+  "map": "Altgard"
+ },
+ "1197": {
+  "genus": "Varian",
+  "name": "Watcher Guardite",
+  "mob": "Contaminated Guardite",
+  "more": 0,
+  "lvl": 37,
+  "zone": "Contaminated Sanctum",
+  "map": "Verteron"
+ },
+ "1193": {
+  "genus": "Cogni",
+  "name": "Addicted Shulak Cart Worker",
+  "mob": "Rampaging Shulak Cart Worker",
+  "more": 0,
+  "lvl": 36,
+  "zone": "Fafnite Deposit",
+  "map": "Altgard"
+ },
+ "1040": {
+  "genus": "Cogni",
+  "name": "Aullaeu Shaman",
+  "mob": "Aullaeu Apprentice Shaman",
+  "more": 0,
+  "lvl": 27,
+  "zone": "Aullaeu Village",
+  "map": "Verteron"
+ },
+ "1044": {
+  "genus": "Cogni",
+  "name": "Aultross's Doppelganger",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1065": {
+  "genus": "Cogni",
+  "name": "Biruta",
+  "mob": "Biruta Wanderer",
+  "more": 1,
+  "lvl": 17,
+  "zone": "Eastern Tolbas Forest",
+  "map": "Verteron"
+ },
+ "1105": {
+  "genus": "Cogni",
+  "name": "Biruta Herbalist",
+  "mob": "Biruta Herbalist",
+  "more": 0,
+  "lvl": 17,
+  "zone": "Nameless Cemetery",
+  "map": "Altgard"
+ },
+ "1202": {
+  "genus": "Cogni",
+  "name": "Decomposed Lupyllini",
+  "mob": "Decomposed Lupyllini",
+  "more": 4,
+  "lvl": 20,
+  "zone": "Battlescar Mound",
+  "map": "Altgard"
+ },
+ "1195": {
+  "genus": "Cogni",
+  "name": "Dracuni Herbalist",
+  "mob": "Dracuni Processing Laborer",
+  "more": 1,
+  "lvl": 41,
+  "zone": "Drana Processing Area",
+  "map": "Verteron"
+ },
+ "1184": {
+  "genus": "Cogni",
+  "name": "Drakan Watcher",
+  "mob": "Processing Facility Drakan Scout",
+  "more": 2,
+  "lvl": 42,
+  "zone": "Drana Processing Area",
+  "map": "Verteron"
+ },
+ "1147": {
+  "genus": "Cogni",
+  "name": "Dratona",
+  "mob": "Scarlet Forest Dratona",
+  "more": 3,
+  "lvl": 41,
+  "zone": "Scarlet Forest",
+  "map": "Verteron"
+ },
+ "1185": {
+  "genus": "Cogni",
+  "name": "Dratona Tinkerer",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1196": {
+  "genus": "Cogni",
+  "name": "Elite Dratona",
+  "mob": "Predator Colossus Balakh",
+  "more": 0,
+  "lvl": 80,
+  "zone": "Patamor Plains",
+  "map": "Morheim"
+ },
+ "1156": {
+  "genus": "Cogni",
+  "name": "Elite Klaw",
+  "mob": "Bodyguard Teegant",
+  "more": 0,
+  "lvl": 45,
+  "zone": "Destroyed Abyss Gate",
+  "map": "Verteron"
+ },
+ "1033": {
+  "genus": "Cogni",
+  "name": "Elite Manduri Fighter",
+  "mob": "Black Claw Manduri Fighter",
+  "more": 2,
+  "lvl": 41,
+  "zone": "Black Claw Village",
+  "map": "Altgard"
+ },
+ "1108": {
+  "genus": "Cogni",
+  "name": "Enhanced Krall Combatant",
+  "mob": "Enhanced Krall Combatant",
+  "more": 0,
+  "lvl": 22,
+  "zone": "Verteron Fortress Ruins",
+  "map": "Verteron"
+ },
+ "1109": {
+  "genus": "Cogni",
+  "name": "Enhanced Krall Sentry",
+  "mob": "Enhanced Krall Sentry",
+  "more": 0,
+  "lvl": 22,
+  "zone": "Verteron Fortress Ruins",
+  "map": "Verteron"
+ },
+ "1191": {
+  "genus": "Cogni",
+  "name": "Furious Feruk",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1162": {
+  "genus": "Cogni",
+  "name": "Kerubar",
+  "mob": "Eternal Kerubar",
+  "more": 2,
+  "lvl": 49,
+  "zone": "Eternal Isle",
+  "map": "Verteron"
+ },
+ "1170": {
+  "genus": "Cogni",
+  "name": "Kerubian",
+  "mob": "Eternal Kerubian",
+  "more": 2,
+  "lvl": 49,
+  "zone": "Eternal Isle",
+  "map": "Verteron"
+ },
+ "1171": {
+  "genus": "Cogni",
+  "name": "Kerubiel",
+  "mob": "Eternal Kerubiel",
+  "more": 1,
+  "lvl": 49,
+  "zone": "Eternal Isle",
+  "map": "Verteron"
+ },
+ "1005": {
+  "genus": "Cogni",
+  "name": "Klaw",
+  "mob": "Wandering Klaw",
+  "more": 5,
+  "lvl": 19,
+  "zone": "Destroyed Abyss Gate",
+  "map": "Verteron"
+ },
+ "1029": {
+  "genus": "Cogni",
+  "name": "Klaw Scout",
+  "mob": "Abyss Klaw",
+  "more": 4,
+  "lvl": 53,
+  "zone": "Devastated Remnants - Dusk Battlefield",
+  "map": "Chaotic Lower Reshanta"
+ },
+ "1002": {
+  "genus": "Cogni",
+  "name": "Krall Laborer",
+  "mob": "Krall Sentinel",
+  "more": 2,
+  "lvl": 21,
+  "zone": "Destroyed Abyss Gate",
+  "map": "Verteron"
+ },
+ "1026": {
+  "genus": "Cogni",
+  "name": "Krall Warrior",
+  "mob": "Krall Assault Trooper",
+  "more": 2,
+  "lvl": 21,
+  "zone": "Verteron Fortress Ruins",
+  "map": "Verteron"
+ },
+ "1017": {
+  "genus": "Cogni",
+  "name": "Krall Warshaman",
+  "mob": "Modified Krall Healer",
+  "more": 1,
+  "lvl": 41,
+  "zone": "Drana Processing Area",
+  "map": "Verteron"
+ },
+ "1115": {
+  "genus": "Cogni",
+  "name": "Kuru Overseer",
+  "mob": "Eternal Kuru Overseer",
+  "more": 1,
+  "lvl": 50,
+  "zone": "Eternal Isle",
+  "map": "Verteron"
+ },
+ "1075": {
+  "genus": "Cogni",
+  "name": "Kuru Tinkerer",
+  "mob": "Eternal Kuru Tinkerer",
+  "more": 3,
+  "lvl": 50,
+  "zone": "Eternal Isle",
+  "map": "Verteron"
+ },
+ "1074": {
+  "genus": "Cogni",
+  "name": "Kuru Worker",
+  "mob": "Kuru Worker",
+  "more": 4,
+  "lvl": 50,
+  "zone": "Immortal Isle",
+  "map": "Altgard"
+ },
+ "1010": {
+  "genus": "Cogni",
+  "name": "Manduri Fighter",
+  "mob": "Black Claw Manduri Combatant",
+  "more": 1,
+  "lvl": 42,
+  "zone": "Black Claw Village",
+  "map": "Altgard"
+ },
+ "1104": {
+  "genus": "Cogni",
+  "name": "Manduri Trebuchet Worker",
+  "mob": "Hill Manduri",
+  "more": 2,
+  "lvl": 39,
+  "zone": "Kraka Footpath",
+  "map": "Verteron"
+ },
+ "1201": {
+  "genus": "Cogni",
+  "name": "Modified Lupyllini",
+  "mob": "Modified Lupyllini",
+  "more": 2,
+  "lvl": 49,
+  "zone": "Immortal Isle",
+  "map": "Altgard"
+ },
+ "1138": {
+  "genus": "Cogni",
+  "name": "Mumu Overseer",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1054": {
+  "genus": "Cogni",
+  "name": "Mumu Warrior",
+  "mob": "Mumu Watcher",
+  "more": 2,
+  "lvl": 32,
+  "zone": "Black Claw Village",
+  "map": "Altgard"
+ },
+ "1137": {
+  "genus": "Cogni",
+  "name": "Mumu Worker",
+  "mob": "Mumu Worker",
+  "more": 1,
+  "lvl": 32,
+  "zone": "Dranactus",
+  "map": "Altgard"
+ },
+ "1200": {
+  "genus": "Cogni",
+  "name": "Naga Elite Priest",
+  "mob": "Abyss Naga Dark Mage",
+  "more": 3,
+  "lvl": 54,
+  "zone": "Contaminated Marsh",
+  "map": "Chaotic Middle Reshanta"
+ },
+ "1030": {
+  "genus": "Cogni",
+  "name": "Nagarant Guardian Warrior",
+  "mob": "Abyss Nagarant Brawler",
+  "more": 5,
+  "lvl": 54,
+  "zone": "Contaminated Marsh",
+  "map": "Chaotic Middle Reshanta"
+ },
+ "1093": {
+  "genus": "Cogni",
+  "name": "Phantasmal Lakshmi",
+  "mob": "Phantasmal Lakshmi",
+  "more": 2,
+  "lvl": 45,
+  "zone": null,
+  "map": null
+ },
+ "1215": {
+  "genus": "Cogni",
+  "name": "Predator Saraswati",
+  "mob": "Predator Saraswati",
+  "more": 2,
+  "lvl": 70,
+  "zone": null,
+  "map": null
+ },
+ "1103": {
+  "genus": "Cogni",
+  "name": "Pretor Veil Administrator",
+  "mob": "Gluttonous Egetis",
+  "more": 0,
+  "lvl": 80,
+  "zone": "Eltnen Barrier Tower Ruins",
+  "map": "Eltnen"
+ },
+ "1080": {
+  "genus": "Cogni",
+  "name": "Sentinel K'nash",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1078": {
+  "genus": "Cogni",
+  "name": "Urugugu Brawler",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1018": {
+  "genus": "Cogni",
+  "name": "Varg Berserker",
+  "mob": "Varg Berserker",
+  "more": 7,
+  "lvl": 53,
+  "zone": "Dranactus",
+  "map": "Altgard"
+ },
+ "1001": {
+  "genus": "Special",
+  "name": "Black Dragon",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1278": {
+  "genus": "Special",
+  "name": "Chonky Hamster",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1204": {
+  "genus": "Special",
+  "name": "Pagati",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1111": {
+  "genus": "Special",
+  "name": "Swift Lugi",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1299": {
+  "genus": "Special",
+  "name": "Two",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1112": {
+  "genus": "Special",
+  "name": "Wandering Merchant Lugi",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ },
+ "1240": {
+  "genus": "Special",
+  "name": "White Bunny",
+  "mob": null,
+  "more": 0,
+  "lvl": null
+ }
+}

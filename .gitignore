@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+
+# per-user progress, window settings and logs
+pet_state.json
+pet_state.json.tmp
+pet_overlay_ui.json
+pet_overlay.log
