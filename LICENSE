@@ -1,6 +1,7 @@
 MIT License
 
-Copyright (c) 2026 AION2-pet-tracker contributors
+Copyright (c) 2026 MartinLVila
+Copyright (c) 2026 AION2-pet-tracker contributors (pet_protocol.py is adapted from their work)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
