@@ -1,17 +1,18 @@
 """Offline check: builds fake packets (world-entry state + a soul pickup) and
-verifies the decoder and the "souls left" math, without the game running.
+verifies the decoder, the "souls left" math, the bundled data and the UI,
+without the game running.
 
-    .venv\\Scripts\\python tools\\selftest.py
+    .venv\\Scripts\\python selftest.py
+    Aion2PetOverlay.exe --selftest      (exit code 0 = pass; details in pet_overlay.log)
 """
 import os
 import struct
-import sys
+import tempfile
 
 import lz4.block
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-import pet_overlay  # noqa: E402
-import pet_protocol as proto  # noqa: E402
+import pet_overlay
+import pet_protocol as proto
 
 
 def varint(value):
@@ -54,6 +55,8 @@ def main():
     assert [e[0] for e in events] == ["state", "gain"], events
 
     tracker = proto.Tracker.__new__(proto.Tracker)  # skip loading the real state file
+    tracker.path = os.path.join(tempfile.mkdtemp(), "pet_state.json")
+    tracker.synced = None
     tracker.levels, tracker.points, tracker.extra, tracker.recent = {}, {}, {}, []
     for e in events:
         tracker.on_event(e)
@@ -71,6 +74,19 @@ def main():
     assert pet_overlay.remaining(3, 0) == 0
     assert pet_overlay.progress_text(1, 10) == "90 to Lv3  (15 to Lv2)"
     assert pet_overlay.progress_text(2, 74) == "1 to Lv3"
+
+    # bundled data and capture library
+    assert len(pet_overlay.PETS) >= 200, len(pet_overlay.PETS)
+    from scapy.all import sniff  # noqa: F401  (fails if the exe is missing scapy modules)
+
+    # UI: build the window, feed it a sync and a soul, then close it
+    overlay = pet_overlay.Overlay(tracker)
+    overlay.events.put(events[0])
+    overlay.events.put(("gain", 1005, 1))
+    overlay.root.after(1500, overlay.root.destroy)
+    overlay.root.mainloop()
+    assert (tracker.levels[1005], tracker.points[1005]) == (2, 71), (tracker.levels, tracker.points)
+    assert tracker.synced
     print("OK")
 
 

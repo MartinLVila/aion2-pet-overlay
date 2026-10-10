@@ -7,3 +7,8 @@ pet_state.json
 pet_state.json.tmp
 pet_overlay_ui.json
 pet_overlay.log
+
+# build output
+build/
+dist/
+*.spec

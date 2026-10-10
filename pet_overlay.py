@@ -19,8 +19,7 @@ from tkinter import ttk
 
 import pet_protocol as proto
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-with open(os.path.join(HERE, "data", "pets.json"), encoding="utf-8") as _f:
+with open(os.path.join(proto.RES_DIR, "data", "pets.json"), encoding="utf-8") as _f:
     PETS = {int(k): v for k, v in json.load(_f).items()}
 UI_FILE = os.path.join(proto.APP_DIR, "pet_overlay_ui.json")
 
@@ -346,7 +345,25 @@ class Overlay:
         self.root.destroy()
 
 
+def run_selftest():
+    """`--selftest`: offline checks, also used by CI against the built exe."""
+    import sys
+    import traceback
+
+    import selftest
+    try:
+        selftest.main()
+    except BaseException:
+        proto.log("selftest failed:\n" + traceback.format_exc())
+        sys.exit(1)
+    proto.log("selftest passed")
+    sys.exit(0)
+
+
 if __name__ == "__main__":
+    import sys
+    if "--selftest" in sys.argv:
+        run_selftest()
     overlay = Overlay()
     overlay.start_capture()
     overlay.root.mainloop()

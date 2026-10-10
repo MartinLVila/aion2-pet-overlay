@@ -31,24 +31,42 @@ Short version: **it reads, it never writes, and there is still a risk.**
 ## Requirements
 
 - Windows 10 or 11
-- [Python](https://www.python.org/downloads/) 3.11 or newer (tick *"Add python.exe to PATH"* during setup)
 - [Npcap](https://npcap.com/#download), installed with the default options. If you already use a
   packet-based DPS meter or Wireshark, you probably have it.
 - Aion 2 running in **windowed** or **borderless** mode. Overlays can't draw on top of exclusive fullscreen.
 
-## Installation
+## Download
 
-1. Download this repo: **Code → Download ZIP**, then extract it anywhere (or `git clone` it).
-2. Open a terminal in the extracted folder and run, once:
+1. Download **`Aion2PetOverlay.exe`** from the [latest release](https://github.com/MartinLVila/aion2-pet-overlay/releases/latest).
+2. Put it in its own folder, since it saves your progress next to itself.
+
+The exe isn't code-signed, so Windows may push back on first launch:
+
+- **SmartScreen** ("Windows protected your PC"): click **More info → Run anyway**.
+- **Smart App Control** ("This app has been blocked"): Windows doesn't let you allow a single app,
+  so [run from source](#run-from-source) instead.
+
+Every release is built and tested by [GitHub Actions](.github/workflows/release.yml) straight from
+this repo's source, and ships with a `SHA256SUMS.txt` so you can verify the download.
+
+### Run from source
+
+If you'd rather not run an unsigned exe, or Smart App Control blocks it:
+
+1. Install [Python](https://www.python.org/downloads/) 3.11 or newer (tick *"Add python.exe to PATH"*).
+2. Download this repo (**Code → Download ZIP**) and extract it anywhere.
+3. Open a terminal in that folder and run, once:
 
    ```
    python -m venv .venv
    .venv\Scripts\python -m pip install -r requirements.txt
    ```
 
+4. From then on, start it with **`start.bat`**.
+
 ## Usage
 
-1. Double-click **`start.bat`**.
+1. Start **`Aion2PetOverlay.exe`** (or `start.bat` if you run from source).
 2. Log in and **enter the world** with your character. When you enter the world the server sends
    your progress for every pet, and the title bar switches to `synced`. If the game was already
    running, go back to character select and enter the world again.
@@ -75,7 +93,7 @@ Short version: **it reads, it never writes, and there is still a risk.**
 | A toast says `Pet 1234` instead of a name | A patch added new pets. Refresh the data (see below) or open an issue. |
 | Overlay hidden behind the game | Switch the game to windowed or borderless mode. |
 
-Errors are written to `pet_overlay.log` next to the scripts. Please attach it when you report a bug.
+Errors are written to `pet_overlay.log` next to the exe (or the scripts). Please attach it when you report a bug.
 
 ## Region support
 
@@ -105,12 +123,15 @@ adds pets, regenerate it with:
 .venv\Scripts\python tools\build_pets.py
 ```
 
-It fetches about one page per second, so it takes a few minutes. To check the decoder without the
-game running:
+It fetches about one page per second, so it takes a few minutes. To check the decoder and UI without
+the game running:
 
 ```
-.venv\Scripts\python tools\selftest.py
+.venv\Scripts\python selftest.py
 ```
+
+To build the exe yourself, run `build.ps1`. It builds with PyInstaller, then runs the same checks inside
+the exe with `Aion2PetOverlay.exe --selftest`.
 
 ## Contributing
 

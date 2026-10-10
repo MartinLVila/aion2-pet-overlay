@@ -19,7 +19,27 @@ import time
 
 import lz4.block
 
-APP_DIR = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, "frozen", False) else __file__))
+FROZEN = getattr(sys, "frozen", False)  # running as the PyInstaller exe
+RES_DIR = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))  # bundled read-only files
+
+
+def _app_dir():
+    """Next to the exe/scripts; falls back to %LOCALAPPDATA% if that folder isn't writable."""
+    here = os.path.dirname(os.path.abspath(sys.executable if FROZEN else __file__))
+    try:
+        probe = os.path.join(here, ".write_test")
+        open(probe, "w").close()
+        os.remove(probe)
+        return here
+    except OSError:
+        fallback = os.path.join(os.environ.get("LOCALAPPDATA", here), "Aion2PetOverlay")
+        os.makedirs(fallback, exist_ok=True)
+        return fallback
+
+
+APP_DIR = _app_dir()
+if sys.stderr is None:  # windowed exe / pythonw: libraries still print warnings
+    sys.stderr = sys.stdout = open(os.devnull, "w")
 STATE_FILE = os.path.join(APP_DIR, "pet_state.json")
 LEGACY_STATE_FILE = os.path.join(APP_DIR, "aion2_pet_tracker_state.json")
 LOG_FILE = os.path.join(APP_DIR, "pet_overlay.log")
