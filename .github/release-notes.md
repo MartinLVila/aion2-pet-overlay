@@ -11,7 +11,7 @@ The exe isn't code-signed, so Windows will be suspicious of it at first:
 
 - **SmartScreen** ("Windows protected your PC"): click **More info → Run anyway**.
 - **Smart App Control** ("This app has been blocked"): there's no way to allow a single app. Run the
-  [Python version](https://github.com/MartinLVila/aion2-pet-overlay#run-from-source) instead.
+  [Python version](https://github.com/MartinLVila/aion2-pet-overlay/blob/main/docs/DEVELOPMENT.md#run-from-source) instead.
 
 This exe was built and tested by GitHub Actions straight from the source in this repo; see the
 workflow run linked to this release. `SHA256SUMS.txt` lets you verify the download.
