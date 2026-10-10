@@ -22,5 +22,7 @@ Start the overlay, then **enter the world** with your character (or re-enter fro
 so it can sync your pet progress. See the [README](https://github.com/MartinLVila/aion2-pet-overlay#readme)
 for controls and troubleshooting.
 
+Enjoying it? You can [support the project on PayPal](https://paypal.me/mytzuo), or say hi on Discord: **mytzuo**.
+
 > Reads game traffic passively and never touches the game client, but NCSOFT hasn't approved it.
 > Use at your own risk.

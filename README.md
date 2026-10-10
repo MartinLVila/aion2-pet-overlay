@@ -139,6 +139,14 @@ Bug reports and pull requests are welcome. Packet formats can change with game p
 overlay stops syncing after an update, an issue with your `pet_overlay.log` is the most useful thing
 you can send.
 
+## Support & contact
+
+If the overlay saves you some farming time and you'd like to say thanks, you can
+[buy me a coffee on PayPal](https://paypal.me/mytzuo). Completely optional, and very appreciated.
+
+Found a bug or have an idea? [Open an issue](https://github.com/MartinLVila/aion2-pet-overlay/issues)
+so others can find it too. For anything else, I'm **mytzuo** on Discord.
+
 ## Credits
 
 - Protocol research and the original decoder:
