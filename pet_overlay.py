@@ -47,18 +47,21 @@ DEFAULTS = {
     "opacity": 92,            # overlay background, percent
     "on_top": False,          # window mode only; the overlay is always on top
     "toast": True,
-    "toast_pos": "top",       # "top" of the screen or "under" the overlay
+    "toast_pos": "top",       # "top" of the screen, "under" the overlay, or "custom" (toast_xy)
     "toast_time": 5,
+    "toast_xy": None,         # [x, y] where the user dragged the popup
     "tray": True,
     "close_to_tray": True,
     "check_updates": True,
+    "tray_hint_shown": False,  # the "still running in the tray" notice, shown once
     "genus": {g: True for g in GENERA},
     "no_mob": False,
     "map": "",
     "geometry": {"overlay": [60, 120, 900, 560], "window": [None, None, 1040, 680]},  # x, y, width, height
 }
-CHOICES = {"mode": ("overlay", "window"), "toast_pos": ("top", "under"), "toast_time": (3, 5, 8)}
-FLAGS = ("on_top", "toast", "tray", "close_to_tray", "check_updates", "no_mob")
+CHOICES = {"mode": ("overlay", "window"), "toast_pos": ("top", "under", "custom"), "toast_time": (3, 5, 8)}
+FLAGS = ("on_top", "toast", "tray", "close_to_tray", "check_updates", "no_mob", "tray_hint_shown")
+APP_ONLY = ("geometry", "toast_xy", "tray_hint_shown")  # set by the app, never by the page
 
 
 def remaining(level, pts):
@@ -94,6 +97,9 @@ def clean_settings(raw, base=None):
         s["map"] = "" if raw["map"] == "All maps" else raw["map"]
     if isinstance(raw.get("genus"), dict):
         s["genus"] = {g: bool(raw["genus"].get(g, s["genus"][g])) for g in GENERA}
+    xy = raw.get("toast_xy")
+    if isinstance(xy, list) and len(xy) == 2 and all(isinstance(v, int) for v in xy):
+        s["toast_xy"] = xy
     geometry = raw.get("geometry")
     if isinstance(geometry, dict):
         for mode in CHOICES["mode"]:
@@ -173,6 +179,15 @@ class Api:
     def start_update(self):
         self._app.start_update()
 
+    def show_main(self):
+        self._app.show_main()
+
+    def place_toast(self):
+        self._app.start_toast_placement()
+
+    def toast_placed(self):
+        self._app.finish_toast_placement()
+
 
 # ---------------------------------------------------------------- app
 
@@ -197,6 +212,9 @@ class App:
         self.ready_seen = threading.Event()
         self.maps = {}              # pet id -> data URI
         self.toast_timer = None
+        self.placing = False        # the user is dragging the popup to a new spot
+        self.relaunch_event = None  # signalled by a second copy of the app (see main())
+        self.instance_mutex = None  # held while running, so a second copy knows
         self.lock = threading.RLock()
 
     # ---------------------------------------------------------- data for the page
@@ -270,6 +288,8 @@ class App:
                 self.push_update()
             elif kind == "update_ready":
                 self.quit()
+                if self.instance_mutex:  # let the new version start while this one is closing
+                    ctypes.windll.kernel32.CloseHandle(self.instance_mutex)
                 updater.restart(sys.executable)
                 return
             else:
@@ -348,16 +368,22 @@ class App:
 
     # ---------------------------------------------------------- soul popup
 
-    def show_toast(self, pid, amount):
-        if not self.settings["toast"] or self.toast is None or self.quitting:
-            return
+    def toast_data(self, pid, amount):
         pet = PETS.get(pid) or {}
-        level, pts = self.tracker.levels.get(pid, 0), self.tracker.points.get(pid, 0)
-        data = {"name": pet.get("name") or f"Pet {pid}", "genus": pet.get("genus"), "amount": amount,
-                "level": level, "points": pts, "extra": self.tracker.extra.get(pid, 0)}
+        return {"name": pet.get("name") or f"Pet {pid}", "genus": pet.get("genus"), "amount": amount,
+                "level": self.tracker.levels.get(pid, 0), "points": self.tracker.points.get(pid, 0),
+                "extra": self.tracker.extra.get(pid, 0)}
+
+    def render_toast(self, data, placing=False):
+        """Fills the popup and returns its size."""
+        size = self.toast.evaluate_js(f"showToast({json.dumps(data)}, {json.dumps(placing)})") or {}
+        return int(size.get("width", 480)), int(size.get("height", 44))
+
+    def show_toast(self, pid, amount):
+        if not self.settings["toast"] or self.toast is None or self.quitting or self.placing:
+            return
         try:
-            size = self.toast.evaluate_js(f"showToast({json.dumps(data)})") or {}
-            w, h = int(size.get("width", 480)), int(size.get("height", 44))
+            w, h = self.render_toast(self.toast_data(pid, amount))
             x, y = self.toast_position(w)
             place_without_focus(self.toast, x, y, w, h)  # never take focus away from the game
         except Exception as e:
@@ -370,13 +396,43 @@ class App:
         self.toast_timer.start()
 
     def toast_position(self, width):
-        win = self.window
-        if (self.settings["toast_pos"] == "under" and self.settings["mode"] == "overlay"
-                and win is not None and not self.hidden):
-            return win.x, win.y + win.height + 6
         import webview
+        win, pos = self.window, self.settings["toast_pos"]
+        if pos == "custom" and self.settings["toast_xy"] and on_some_screen(*self.settings["toast_xy"]):
+            return tuple(self.settings["toast_xy"])
+        if pos == "under" and self.settings["mode"] == "overlay" and win is not None and not self.hidden:
+            return win.x, win.y + win.height + 6
         screen = webview.screens[0]
         return screen.x + (screen.width - width) // 2, screen.y + 16
+
+    def start_toast_placement(self):
+        """Shows a sample popup the user can drag anywhere, with a Done button."""
+        if self.toast is None or self.quitting:
+            return
+        self.placing = True
+        if self.toast_timer:
+            self.toast_timer.cancel()
+        pid = next((p for p in self.tracker.recent if p in PETS), next(iter(PETS)))
+        try:
+            w, h = self.render_toast(self.toast_data(pid, 1), placing=True)
+            x, y = self.toast_position(w)
+            place_without_focus(self.toast, x, y, w, h)
+        except Exception as e:
+            proto.log("toast:", e)
+            self.placing = False
+
+    def finish_toast_placement(self):
+        if not self.placing:
+            return
+        self.placing = False
+        try:
+            self.settings["toast_xy"] = [int(self.toast.x), int(self.toast.y)]
+            self.settings["toast_pos"] = "custom"
+        except Exception as e:
+            proto.log("toast:", e)
+        self.save_settings()
+        self.hide_toast()
+        self.push(f"window.app && app.setSettings({json.dumps(self.settings)})")
 
     def hide_toast(self):
         if self.toast is not None and not self.quitting:
@@ -430,9 +486,17 @@ class App:
 
     def hide_main(self):
         self.remember_geometry()
-        self.save_settings()
         self.hidden = True
         self.window.hide()
+        if self.tray and not self.settings["tray_hint_shown"]:
+            # Windows 11 tucks new tray icons behind the ^ arrow, so say once where the app went
+            try:
+                self.tray.notify("Still running and counting souls. Click the tray icon (under ^) or open the app "
+                                 "again to bring it back. Quit from the tray icon's menu.", "Hidden to the tray")
+                self.settings["tray_hint_shown"] = True
+            except Exception as e:
+                proto.log("tray:", e)
+        self.save_settings()
 
     def show_main(self):
         if self.quitting or self.window is None:
@@ -476,7 +540,7 @@ class App:
     # ---------------------------------------------------------- settings
 
     def update_settings(self, changes):
-        changes = {k: v for k, v in changes.items() if k != "geometry"}
+        changes = {k: v for k, v in changes.items() if k not in APP_ONLY}
         self.remember_geometry()
         old = self.settings
         self.settings = clean_settings(changes, old)
@@ -565,8 +629,16 @@ class App:
                 except Exception as e:
                     proto.log("close:", e)
 
+    def watch_relaunch(self, event):
+        """Opening the app while it's already running brings this window back (see main())."""
+        while not self.quitting:
+            if ctypes.windll.kernel32.WaitForSingleObject(event, 1000) == 0:
+                self.show_main()
+
     def background(self):
         """Runs once the GUI loop is up."""
+        if self.relaunch_event:
+            threading.Thread(target=self.watch_relaunch, args=(self.relaunch_event,), daemon=True).start()
         if self.toast.events.loaded.wait(20):
             style_toast(self.toast)
             round_corners(self.toast)
@@ -589,7 +661,8 @@ class App:
         # main window can be replaced (mode switch) without the app exiting. It stays "shown" but parked
         # off screen, because WebView2 stops drawing in a hidden window.
         self.toast = webview.create_window(
-            "Soul pickup", os.path.join(UI_DIR, "toast.html"), width=480, height=44, x=OFF_SCREEN, y=OFF_SCREEN,
+            "Soul pickup", os.path.join(UI_DIR, "toast.html"), js_api=self.api,
+            width=480, height=44, x=OFF_SCREEN, y=OFF_SCREEN,
             min_size=(60, 20), frameless=True, easy_drag=False, on_top=True, focus=False,
             shadow=False, resizable=False, background_color=SURFACE)
         self.create_main()
@@ -611,6 +684,12 @@ def place_without_focus(win, x, y, width, height):
     HWND_TOPMOST, SWP_NOACTIVATE, SWP_SHOWWINDOW = -1, 0x10, 0x40
     ctypes.windll.user32.SetWindowPos(hwnd, ctypes.c_void_p(HWND_TOPMOST), int(x * scale), int(y * scale),
                                       int(width * scale), int(height * scale), SWP_NOACTIVATE | SWP_SHOWWINDOW)
+
+
+def on_some_screen(x, y):
+    """False when a saved position is no longer on any monitor (e.g. one was unplugged)."""
+    import webview
+    return any(sc.x <= x + 20 < sc.x + sc.width and sc.y <= y + 10 < sc.y + sc.height for sc in webview.screens)
 
 
 def round_corners(win):
@@ -712,13 +791,28 @@ def main():
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(APP_ID)  # own taskbar button and icon
     except Exception:
         pass
+    # one copy at a time: opening the app again just brings the running one back
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.CreateMutexW.restype = kernel32.CreateEventW.restype = kernel32.OpenEventW.restype = ctypes.c_void_p
+    mutex = kernel32.CreateMutexW(None, False, "Local\\Aion2PetOverlay.instance")
+    if ctypes.get_last_error() == 183:  # ERROR_ALREADY_EXISTS
+        EVENT_MODIFY_STATE = 0x2
+        event = kernel32.OpenEventW(EVENT_MODIFY_STATE, False, "Local\\Aion2PetOverlay.show")
+        if event:
+            kernel32.SetEvent(ctypes.c_void_p(event))
+        proto.log("already running: asked it to show itself")
+        sys.exit(0)
+    relaunch_event = kernel32.CreateEventW(None, False, False, "Local\\Aion2PetOverlay.show")
     if not webview2_available():
         proto.log("WebView2 runtime missing")
         message_box("This app needs the Microsoft Edge WebView2 Runtime, which is missing on this PC.\n\n"
                     "Your browser will open the download page. Install the Evergreen runtime, then start the app again.")
         webbrowser.open("https://developer.microsoft.com/microsoft-edge/webview2/")
         sys.exit(1)
-    App().run()
+    app = App()
+    app.relaunch_event = ctypes.c_void_p(relaunch_event) if relaunch_event else None
+    app.instance_mutex = ctypes.c_void_p(mutex) if mutex else None
+    app.run()
 
 
 if __name__ == "__main__":

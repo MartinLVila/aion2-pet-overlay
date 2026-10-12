@@ -29,7 +29,9 @@ When a new version is out, an **Update** button shows up in the title bar. One c
 
 Play in **windowed** or **borderless** mode so the overlay can stay on top. Prefer it outside the game?
 Open the settings (gear icon) and switch to **Window**. Closing it keeps it running in the tray, still
-counting souls; quit from the tray icon's menu.
+counting souls. To bring it back, open the app again, click a soul popup or click the tray icon (Windows 11
+may tuck it under the **^** arrow). Quit from the tray icon's menu. You can also drag the soul popup anywhere:
+**Settings → Move the popup**.
 
 ### "Windows protected your PC"?
 

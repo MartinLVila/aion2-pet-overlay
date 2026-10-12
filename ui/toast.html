@@ -14,6 +14,11 @@
   .left.done { color: var(--fera); }
   .waste { color: var(--warn); }
   .levels { width: 140px; }
+  .card { cursor: pointer; }
+  .placing .card { cursor: move; }
+  .hint { color: var(--muted); }
+  .done { height: 26px; padding: 0 10px; border-radius: 5px; border: 0; background: var(--accent); color: var(--accent-ink);
+          font: inherit; font-weight: 700; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -21,16 +26,28 @@
 <script src="common.js"></script>
 <script>
 // Called by Python; returns the card's size so the window can be fitted to it.
-function showToast(t) {
+// While `placing`, the card can be dragged anywhere and shows a Done button.
+function showToast(t, placing) {
   const left = soulsLeft(t.level, t.points);
   const card = document.getElementById("card");
+  document.body.classList.toggle("placing", !!placing);
+  card.classList.toggle("pywebview-drag-region", !!placing);
   card.innerHTML = `<span class="name">${esc(t.name)}</span><span class="gain num">+${t.amount}</span>
     ${levelBar(t.level, t.points, t.genus)}
     <span class="left num ${left ? "" : "done"}">${left ? `${left} to Lv3` : "Lv3 done"}</span>
-    ${!left && t.extra ? `<span class="waste num">${t.extra} wasted, switch mobs</span>` : ""}`;
+    ${!left && t.extra ? `<span class="waste num">${t.extra} wasted, switch mobs</span>` : ""}
+    ${placing ? `<span class="hint">Drag me</span><button class="done" type="button" id="done">Done</button>` : ""}`;
   const r = card.getBoundingClientRect();
   return { width: Math.ceil(r.width), height: Math.ceil(r.height) };
 }
+
+document.addEventListener("mousedown", e => { if (e.target.closest("#done")) e.stopPropagation(); }, true);
+document.addEventListener("click", e => {
+  apiReady.then(api => {
+    if (e.target.closest("#done")) api.toast_placed();
+    else if (!document.body.classList.contains("placing")) api.show_main();  // click the popup to open the overlay
+  });
+});
 </script>
 </body>
 </html>

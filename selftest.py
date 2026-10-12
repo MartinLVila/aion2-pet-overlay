@@ -102,6 +102,10 @@ def main():
     app.update_settings({"opacity": 5, "mode": "nope", "toast_time": 8, "geometry": {"overlay": [0, 0, 1, 1]}})
     assert (app.settings["opacity"], app.settings["mode"], app.settings["toast_time"]) == (50, "overlay", 8)
     assert app.settings["geometry"]["overlay"] != [0, 0, 1, 1]
+    app.update_settings({"toast_pos": "custom", "toast_xy": [1, 2], "tray_hint_shown": True})  # last two are app-only
+    assert app.settings["toast_pos"] == "custom" and app.settings["toast_xy"] is None
+    assert not app.settings["tray_hint_shown"]
+    assert pet_overlay.clean_settings({"toast_xy": [10, 20], "tray_hint_shown": True})["toast_xy"] == [10, 20]
     assert pet_overlay.load_settings(settings_path)["toast_time"] == 8
 
     # the real window: WebView2 loads the page, which calls back into Python, then it closes

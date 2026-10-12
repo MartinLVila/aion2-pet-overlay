@@ -152,8 +152,11 @@ function applySettings() {
   $("ontop-note").textContent = overlay ? "The overlay is always on top of the game." : "Stays above other windows while you play.";
   $("set-toast").checked = cfg.toast;
   $("set-toast-pos").value = cfg.toast_pos; $("set-toast-time").value = String(cfg.toast_time);
-  $("set-toast-pos").disabled = $("set-toast-time").disabled = !cfg.toast;
-  for (const id of ["row-toast-pos", "row-toast-time"]) $(id).classList.toggle("off", !cfg.toast);
+  $("set-toast-pos").disabled = $("set-toast-time").disabled = $("move-toast").disabled = !cfg.toast;
+  for (const id of ["row-toast-pos", "row-toast-time", "row-toast-move"]) $(id).classList.toggle("off", !cfg.toast);
+  const toTray = cfg.tray && cfg.close_to_tray;
+  $("close").title = toTray ? "Hide to the tray (it keeps counting souls)" : "Quit";
+  $("close").setAttribute("aria-label", $("close").title);
   $("set-tray").checked = cfg.tray;
   $("set-close-tray").checked = cfg.tray && cfg.close_to_tray; $("set-close-tray").disabled = !cfg.tray;
   $("row-close-tray").classList.toggle("off", !cfg.tray);
@@ -182,6 +185,7 @@ window.app = {
     if (ui.selected !== null && !$("map").hidden) renderMap();
   },
   flash(id) { ui.flash.add(id); },
+  setSettings(next) { cfg = next; applySettings(); },
   setUpdate(u) {
     const btn = $("update");
     btn.hidden = !u;
@@ -222,6 +226,7 @@ document.addEventListener("click", e => {
   if (t.closest("#collapse")) { toggleCollapse(); return; }
   if (t.closest("#close")) { api.close(); return; }
   if (t.closest("#update")) { api.start_update(); return; }
+  if (t.closest("#move-toast")) { api.place_toast(); return; }
   const opt = t.closest(".seg-opt");
   if (opt && opt.dataset.mode !== cfg.mode) { save({ mode: opt.dataset.mode }); return; }
   const row = t.closest(".row");
@@ -233,7 +238,10 @@ $("map-filter").addEventListener("change", e => { save({ map: e.target.value });
 $("set-opacity").addEventListener("input", e => save({ opacity: +e.target.value }));
 $("set-ontop").addEventListener("change", e => save({ on_top: e.target.checked }));
 $("set-toast").addEventListener("change", e => save({ toast: e.target.checked }));
-$("set-toast-pos").addEventListener("change", e => save({ toast_pos: e.target.value }));
+$("set-toast-pos").addEventListener("change", async e => {
+  await save({ toast_pos: e.target.value });
+  if (e.target.value === "custom" && !cfg.toast_xy) api.place_toast();  // nowhere chosen yet: pick it now
+});
 $("set-toast-time").addEventListener("change", e => save({ toast_time: +e.target.value }));
 $("set-tray").addEventListener("change", e => save({ tray: e.target.checked }));
 $("set-close-tray").addEventListener("change", e => save({ close_to_tray: e.target.checked }));
