@@ -26,6 +26,7 @@ Works on **Global** servers (EU/NA) on Windows 10 and 11. Windows 10 needs the
 
 That's it. Your progress loads when you enter the world, and the overlay keeps count as you farm.
 When a new version is out, an **Update** button shows up in the title bar. One click and it updates itself.
+Versions before 1.3.2 only check when they start, so if you don't see it, close and reopen the overlay.
 
 Play in **windowed** or **borderless** mode so the overlay can stay on top. Prefer it outside the game?
 Open the settings (gear icon) and switch to **Window**. Closing it keeps it running in the tray, still
@@ -42,8 +43,9 @@ If it says **"This app has been blocked"** (Smart App Control), you can
 ## Is it safe?
 
 It only reads the data the game already sends to your PC, the same way DPS meters do. It never
-touches the game. The only thing it connects to is GitHub, once at startup, to check for updates.
-Updates are verified against a checksum before they're installed.
+touches the game. It connects to GitHub to check for updates (at startup and every 3 hours) and to
+MetaBot.GG for map images the first time you open a pet's map. Updates are verified against a checksum
+before they're installed.
 
 Still, NCSOFT hasn't approved it, and their rules ban unauthorized programs.
 **Use it at your own risk.**

@@ -41,6 +41,7 @@ GENERA = ["Cogni", "Natura", "Fera", "Varian"]
 SURFACE = "#121821"
 MAP_SIZE = (768, 432)  # twice the panel size, sharp on high-DPI screens
 OFF_SCREEN = -20000     # where the popup waits between souls
+UPDATE_EVERY = 3 * 3600  # seconds between update checks while the app is open
 
 DEFAULTS = {
     "mode": "overlay",        # "overlay" (borderless, over the game) or "window" (normal window)
@@ -216,6 +217,7 @@ class App:
         self.relaunch_event = None  # signalled by a second copy of the app (see main())
         self.instance_mutex = None  # held while running, so a second copy knows
         self.lock = threading.RLock()
+        self.stopped = threading.Event()  # set on quit, wakes the update checker
 
     # ---------------------------------------------------------- data for the page
 
@@ -278,8 +280,10 @@ class App:
             elif kind == "error":
                 self.error, state_changed = ev[1], True
             elif kind == "update":
-                self.update_info, self.update_status = ev[1], "available"
-                self.push_update()
+                same = self.update_info and self.update_info["version"] == ev[1]["version"]
+                if self.update_status != "downloading" and not same:  # a repeat check keeps "failed" as is
+                    self.update_info, self.update_status = ev[1], "available"
+                    self.push_update()
             elif kind == "update_progress":
                 self.update_status, self.update_progress = "downloading", ev[1]
                 self.push_update()
@@ -333,8 +337,6 @@ class App:
             self.events.put(("error", f"Capture failed ({e.__class__.__name__}); try running as administrator"))
 
     def check_for_update(self):
-        if not self.settings["check_updates"]:
-            return
         try:
             info = updater.check()
         except Exception as e:
@@ -342,6 +344,14 @@ class App:
             return
         if info:
             self.events.put(("update", info))
+
+    def watch_updates(self):
+        """Checks at startup and then every few hours, so a copy left open for days still hears about
+        new versions (v1.1 to v1.3.1 only checked at startup)."""
+        while not self.stopped.is_set():
+            if self.settings["check_updates"] and self.update_status != "downloading":
+                self.check_for_update()
+            self.stopped.wait(UPDATE_EVERY)
 
     def start_update(self):
         info = self.update_info
@@ -617,6 +627,7 @@ class App:
                 return
             self.remember_geometry()
             self.quitting = True
+            self.stopped.set()
         self.save_settings()
         self.tracker.save()
         self.stop_tray()
@@ -646,7 +657,7 @@ class App:
             self.start_tray()
         if not self.selftest:
             threading.Thread(target=self.capture, daemon=True).start()
-            threading.Thread(target=self.check_for_update, daemon=True).start()
+            threading.Thread(target=self.watch_updates, daemon=True).start()
         else:
             def watchdog():  # the page must call ready() or the selftest fails
                 if not self.ready_seen.wait(60):

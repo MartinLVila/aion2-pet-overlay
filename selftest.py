@@ -94,6 +94,10 @@ def main():
     assert (tracker.levels[1005], tracker.points[1005]) == (2, 71), (tracker.levels, tracker.points)
     assert tracker.synced and app.capturing
     assert app.update_payload() == {"status": "available", "version": "9.9.9", "progress": 0.0}
+    app.handle([("update_error", "boom"), ("update", {"version": "9.9.9", "page": "", "exe_url": None, "sums_url": None})])
+    assert app.update_status == "failed"  # the periodic re-check doesn't hide a failed download
+    app.handle([("update", {"version": "9.9.10", "page": "", "exe_url": None, "sums_url": None})])
+    assert app.update_payload()["version"] == "9.9.10" and app.update_status == "available"
     payload = json.loads(json.dumps(app.ui_payload()))  # must survive the trip to the page
     assert len(payload["pets"]) == len(pet_overlay.PETS) and payload["state"]["levels"]["1005"] == 2
     assert "tiles" not in json.dumps(payload["pets"])
