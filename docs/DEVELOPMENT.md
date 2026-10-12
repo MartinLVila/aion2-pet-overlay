@@ -25,14 +25,15 @@ Use this if you'd rather not run an unsigned exe, or if Smart App Control blocks
 | `0x0D90` | You loot a soul | Pet ID and souls gained |
 
 Messages arrive in LZ4-compressed bundles. The decoder rebuilds the TCP stream, unpacks them, and keeps
-a running count between syncs. `pet_overlay.py` is the Tkinter UI.
+a running count between syncs. `pet_overlay.py` is the Tkinter UI. `pet_map.py` draws the spawn map
+shown when you click a pet; its world-map tiles come from MetaBot.GG on first use and are cached in `map_cache/`.
 
 Global servers cap pets at level 3 (5 + 25 + 75 = 105 souls). Korean and Taiwanese servers have more
 levels and may use different packets, so they aren't supported.
 
 ## Pet data
 
-`data/pets.json` holds each pet's name, genus, best mob, mob level and spawn zone, scraped from
+`data/pets.json` holds each pet's name, genus, best mob, mob level, spawn zone and spawn points, scraped from
 [MetaBot.GG](https://metabot.gg/en/aion-2/mounts) (attribution required by their terms). After a
 patch adds pets, regenerate it:
 

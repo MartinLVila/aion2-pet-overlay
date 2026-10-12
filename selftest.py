@@ -79,6 +79,7 @@ def main():
     # bundled data and capture library
     assert len(pet_overlay.PETS) >= 200, len(pet_overlay.PETS)
     from scapy.all import sniff  # noqa: F401  (fails if the exe is missing scapy modules)
+    check_map()
 
     check_updater()
 
@@ -87,12 +88,30 @@ def main():
     overlay.events.put(events[0])
     overlay.events.put(("gain", 1005, 1))
     overlay.events.put(("update", {"version": "9.9.9", "page": "", "exe_url": None, "sums_url": None}))
+    mapped = next(pid for pid, p in pet_overlay.PETS.items() if p.get("spawn") and p["spawn"]["dots"])
+    overlay.show_map(mapped)  # tiles come from the fake fetcher installed by check_map
     overlay.root.after(1500, overlay.root.destroy)
     overlay.root.mainloop()
     assert (tracker.levels[1005], tracker.points[1005]) == (2, 71), (tracker.levels, tracker.points)
     assert tracker.synced
     assert overlay.update_info["version"] == "9.9.9"
+    assert overlay.map_pid == mapped and overlay.map_image is not None
     print("OK")
+
+
+def check_map():
+    """Spawn data is bundled and the minimap renders, using a fake tile instead of the network."""
+    from PIL import Image
+    import pet_map
+    farmable = [p for p in pet_overlay.PETS.values() if p.get("mob")]
+    with_spawn = [p for p in farmable if p.get("spawn") and p["spawn"]["dots"]]
+    assert len(with_spawn) >= len(farmable) * 0.8, (len(with_spawn), len(farmable))
+    pet_map.fetch_tile = lambda path: Image.new("RGB", (256, 256), "#406040")
+    img = pet_map.render({"tiles": [["/t.webp", 0, 0, 50, 50]], "dots": [[75, 75]]})
+    assert img.size == (pet_map.WIDTH, pet_map.HEIGHT)
+    assert img.getpixel((10, 10)) == (0x40, 0x60, 0x40)  # tile
+    assert img.getpixel((pet_map.WIDTH - 10, 10)) == (0x0b, 0x14, 0x20)  # water
+    assert img.getpixel((round(pet_map.WIDTH * 0.75), round(pet_map.HEIGHT * 0.75))) == (0xff, 0xd1, 0x66)  # dot
 
 
 def check_updater():

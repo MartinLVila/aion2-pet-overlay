@@ -8,7 +8,7 @@ is added on top.
 
 Start it BEFORE entering the world (or re-enter from character select).
 Progress is saved between sessions. Drag the title bar to move, "–" collapses,
-"x" closes, the corner grip resizes.
+"x" closes, the corner grip resizes. Click a pet to see where its mob spawns.
 """
 import json
 import os
@@ -19,6 +19,9 @@ import tkinter as tk
 import webbrowser
 from tkinter import ttk
 
+from PIL import ImageTk
+
+import pet_map
 import pet_protocol as proto
 import updater
 from version import __version__
@@ -120,21 +123,25 @@ class Overlay:
         tk.Entry(search_row, textvariable=self.search, bg=FIELD, fg=FG, insertbackground=FG, relief="flat",
                  font=("Segoe UI", 9)).pack(side="left", fill="x", expand=True, padx=(6, 0), ipady=2)
 
-        # pet list
+        # pet list; clicking a row shows its mob's spawn map on the right
+        content = tk.Frame(self.body, bg=BG)
+        content.pack(fill="both", expand=True, pady=(0, 6))
         columns = (("pet", "Pet", 130, "w"), ("lv", "Lv", 36, "center"), ("left", "Left", 52, "center"),
                    ("mob", "Mob (level)", 170, "w"), ("zone", "Zone · Map", 200, "w"))
-        self.tree = ttk.Treeview(self.body, columns=[c[0] for c in columns], show="headings", selectmode="browse")
+        self.tree = ttk.Treeview(content, columns=[c[0] for c in columns], show="headings", selectmode="browse")
         for key, heading, width, anchor in columns:
             self.tree.heading(key, text=heading, command=lambda k=key: self.sort_by(k))
             self.tree.column(key, width=width, anchor=anchor, stretch=key in ("mob", "zone"))
         for g, color in GENUS_COLOR.items():
             self.tree.tag_configure(g, foreground=color)
         self.tree.tag_configure("flash", background="#3b3520")
-        scroll = ttk.Scrollbar(self.body, orient="vertical", command=self.tree.yview)
-        self.tree.configure(yscrollcommand=scroll.set)
-        scroll.pack(side="right", fill="y")
-        self.tree.pack(fill="both", expand=True, padx=(6, 0), pady=(0, 6))
+        self.scroll = ttk.Scrollbar(content, orient="vertical", command=self.tree.yview)
+        self.tree.configure(yscrollcommand=self.scroll.set)
+        self.scroll.pack(side="right", fill="y")
+        self.tree.pack(fill="both", expand=True, padx=(6, 0))
+        self.tree.bind("<ButtonRelease-1>", self.on_row_click)
         self.sort = self.ui.get("sort", "left")
+        self.build_map_panel(content)
 
         grip = tk.Label(root, text="◢", bg=BG, fg=DIM, cursor="size_nw_se")
         grip.place(relx=1, rely=1, anchor="se")
@@ -153,6 +160,90 @@ class Overlay:
         s.configure("TCombobox", fieldbackground=FIELD, background=FIELD, foreground=FG)
         s.map("TCombobox", fieldbackground=[("readonly", FIELD)], foreground=[("readonly", FG)],
               selectbackground=[("readonly", FIELD)], selectforeground=[("readonly", FG)])
+
+    def build_map_panel(self, parent):
+        """Spawn map of the clicked mob. Packed only while a row is selected."""
+        self.map_pid = None
+        self.map_image = None  # PhotoImage must stay referenced or Tk drops it
+        panel = self.map_panel = tk.Frame(parent, bg=PANEL)
+        head = tk.Frame(panel, bg=PANEL)
+        head.pack(fill="x")
+        self.map_title = tk.Label(head, bg=PANEL, fg=ACCENT, font=("Segoe UI", 9, "bold"), anchor="w")
+        self.map_title.pack(side="left", padx=6, pady=3, fill="x", expand=True)
+        close = tk.Label(head, text="x", bg=PANEL, fg=DIM, font=("Segoe UI", 10, "bold"), padx=7, cursor="hand2")
+        close.pack(side="right")
+        close.bind("<Button-1>", lambda e: self.hide_map())
+        frame = tk.Frame(panel, bg=pet_map.WATER, width=pet_map.WIDTH, height=pet_map.HEIGHT)
+        frame.pack(padx=6)
+        frame.pack_propagate(False)
+        self.map_view = tk.Label(frame, bg=pet_map.WATER, fg=DIM, font=("Segoe UI", 9), bd=0)
+        self.map_view.pack(fill="both", expand=True)
+        foot = tk.Frame(panel, bg=PANEL)
+        foot.pack(fill="x", padx=6, pady=3)
+        self.map_info = tk.Label(foot, bg=PANEL, fg=DIM, font=("Segoe UI", 8), anchor="w")
+        self.map_info.pack(side="left")
+        self.map_link = tk.Label(foot, text="Interactive map · MetaBot.GG ↗", bg=PANEL, fg="#58b4e8",
+                                 font=("Segoe UI", 8, "underline"), cursor="hand2")
+        self.map_link.bind("<Button-1>", lambda e: self.open_map_link())
+
+    def on_row_click(self, e):
+        if self.tree.identify_region(e.x, e.y) != "cell":
+            return
+        row = self.tree.identify_row(e.y)
+        if not row:
+            return
+        if int(row) == self.map_pid:
+            self.hide_map()
+        else:
+            self.show_map(int(row))
+
+    def show_map(self, pid):
+        pet = PETS[pid]
+        spawn = pet.get("spawn")
+        self.map_pid = pid
+        self.map_image = None
+        zone = " · ".join(x for x in (pet.get("zone"), pet.get("map")) if x)
+        self.map_title.config(text=f'{pet.get("mob") or "chest / shop"}' + (f"  ·  {zone}" if zone else ""))
+        if not self.map_panel.winfo_ismapped():
+            self.map_panel.pack(side="right", fill="y", padx=(4, 6), before=self.scroll)
+        if spawn and spawn.get("link"):
+            self.map_link.pack(side="right")
+        else:
+            self.map_link.pack_forget()
+        if not spawn or not spawn["dots"]:
+            self.map_view.config(image="", text="No spawn map for this pet")
+            self.map_info.config(text="")
+            return
+        self.map_view.config(image="", text="Loading map…")
+        self.map_info.config(text=f'{len(spawn["dots"])} spawn points')
+        threading.Thread(target=self.load_map, args=(pid, spawn), daemon=True).start()
+
+    def load_map(self, pid, spawn):
+        try:
+            img = pet_map.render(spawn)
+        except Exception as e:
+            proto.log("map:", e)
+            img = None
+        self.events.put(("map", pid, img))
+
+    def on_map(self, pid, img):
+        if pid != self.map_pid:
+            return  # another row was clicked meanwhile
+        if img is None:
+            self.map_view.config(image="", text="Map unavailable (offline?)")
+            return
+        self.map_image = ImageTk.PhotoImage(img)
+        self.map_view.config(image=self.map_image, text="")
+
+    def hide_map(self):
+        self.map_pid = self.map_image = None
+        self.map_panel.pack_forget()
+        self.tree.selection_set(())
+
+    def open_map_link(self):
+        spawn = PETS.get(self.map_pid, {}).get("spawn") or {}
+        if spawn.get("link"):
+            webbrowser.open(pet_map.BASE + spawn["link"])
 
     def checkbox(self, parent, text, var, color, bold=False):
         box = tk.Checkbutton(parent, text=text, variable=var, command=self.refresh, bg=BG, fg=color,
@@ -239,6 +330,8 @@ class Overlay:
                     self.capturing = ev[1]
                 elif ev[0] == "error":
                     self.error = ev[1]
+                elif ev[0] == "map":
+                    self.on_map(ev[1], ev[2])
                 elif ev[0].startswith("update"):
                     self.on_update_event(ev)
                     if ev[0] == "update_ready":
@@ -308,6 +401,8 @@ class Overlay:
         for pid, genus, name, level, left, mob, zone in self.rows():
             tags = (genus, "flash") if pid in self.flash else (genus,)
             self.tree.insert("", "end", iid=str(pid), values=(name, level, left, mob, zone), tags=tags)
+        if self.map_pid is not None and self.tree.exists(str(self.map_pid)):
+            self.tree.selection_set(str(self.map_pid))  # keep the mapped row highlighted
         self.tree.yview_moveto(top)
         self.update_recent()
         self.update_title()

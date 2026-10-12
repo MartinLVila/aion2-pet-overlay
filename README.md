@@ -7,6 +7,7 @@ See which pets you still need for level 3, and how many souls are left, every ti
 - A popup on every soul: `Klaw +1 · 15 to Lv3`
 - A list of every pet you haven't maxed, with the best mob to farm and where to find it
 - Filter by genus or map, or search by name
+- Click a pet to see a map of where its mob spawns
 
 Works on **Global** servers (EU/NA) on Windows 10 and 11.
 

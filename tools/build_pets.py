@@ -1,4 +1,4 @@
-"""Builds data/pets.json: genus, best soul mob, mob level and spawn zone for every pet.
+"""Builds data/pets.json: genus, best soul mob, mob level, spawn zone and spawn minimap for every pet.
 
 Source: metabot.gg (English pages). Run by hand only when new pets ship:
 
@@ -76,6 +76,28 @@ def parse_mob(page):
     return (best[0], best[1]) if best else (None, None)
 
 
+FIGURE = re.compile(r'<figure class="[^"]*spawnMap"[^>]*aria-label="([^"]*)">(.*?)</figure>', re.S)
+TILE = re.compile(r'spawnTile" style="left:([-\d.]+)%;top:([-\d.]+)%;width:calc\(([\d.]+)% \+ 1px\);'
+                  r'height:calc\(([\d.]+)% \+ 1px\);background-image:url\(([^)]+)\)')
+DOT = re.compile(r'spawnDot"[^>]*style="left:([-\d.]+)%;top:([-\d.]+)%')
+MAP_LINK = re.compile(r'href="(/en/aion-2/map/[^"?]+\?focus=npc:\d+)"')
+
+
+def parse_spawn(page, map_):
+    """Spawn-point minimap for `map_`: the 16:9 view's tiles and dots, all in % of the view."""
+    figures = [(label, body) for label, body in FIGURE.findall(page)]
+    if not figures:
+        return None
+    label, body = next((f for f in figures if f[0].endswith(f"on the {map_} map")), figures[0])
+    r = lambda v: round(float(v), 2)
+    link = MAP_LINK.search(page)
+    return {
+        "tiles": [[url, r(left), r(top), r(w), r(h)] for left, top, w, h, url in TILE.findall(body)],
+        "dots": [[r(x), r(y)] for x, y in DOT.findall(body)],
+        "link": link.group(1) if link else None,
+    }
+
+
 def main():
     pets = parse_list(get(BASE + "/en/aion-2/mounts"))
     print(len(pets), "pets")
@@ -83,14 +105,22 @@ def main():
         if p["mob_url"]:
             time.sleep(1)
             try:
-                p["zone"], p["map"] = parse_mob(get(BASE + p["mob_url"]))
+                page = get(BASE + p["mob_url"])
+                p["zone"], p["map"] = parse_mob(page)
+                p["spawn"] = parse_spawn(page, p["map"])
             except Exception as e:
                 print("  error", pid, e)
-                p["zone"] = p["map"] = None
+                p["zone"] = p["map"] = p["spawn"] = None
             print(pid, p["name"], "|", p["mob"], "|", p.get("zone"), "/", p.get("map"), flush=True)
         p.pop("mob_url")
-    with open(OUT, "w", encoding="utf-8") as f:
-        json.dump(pets, f, ensure_ascii=False, indent=1)
+    write(pets)
+
+
+def write(pets):
+    """One pet per line: spawn coordinates would otherwise take tens of thousands of lines."""
+    lines = [f"{json.dumps(pid)}: {json.dumps(p, ensure_ascii=False)}" for pid, p in pets.items()]
+    with open(OUT, "w", encoding="utf-8", newline="\n") as f:
+        f.write("{\n" + ",\n".join(lines) + "\n}\n")
 
 
 if __name__ == "__main__":
