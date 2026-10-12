@@ -34,8 +34,9 @@ def fetch_tile(path):
     return Image.open(local).convert("RGB")
 
 
-def render(spawn, fetch=None, size=(WIDTH, HEIGHT)):
-    """PIL image of the spawn view. Missing tiles are left as water instead of failing."""
+def render(spawn, fetch=None, size=(WIDTH, HEIGHT), dots=True):
+    """PIL image of the spawn view. Missing tiles are left as water instead of failing.
+    With dots=False only the map is drawn (the UI places its own markers)."""
     fetch = fetch or fetch_tile
     width, height = size
     img = Image.new("RGB", size, WATER)
@@ -47,6 +48,8 @@ def render(spawn, fetch=None, size=(WIDTH, HEIGHT)):
             proto.log("map tile:", path, e)
             continue
         img.paste(tile, (round(left / 100 * width), round(top / 100 * height)))
+    if not dots:
+        return img
     draw = ImageDraw.Draw(img)
     r = 3
     for x, y in spawn["dots"]:

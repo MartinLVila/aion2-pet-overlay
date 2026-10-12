@@ -4,12 +4,15 @@ See which pets you still need for level 3, and how many souls are left, every ti
 
 ![Overlay screenshot](docs/screenshot.png)
 
-- A popup on every soul: `Klaw +1 · 15 to Lv3`
-- A list of every pet you haven't maxed, with the best mob to farm and where to find it
+- A popup on every soul with the pet, the souls you got and how many are left to Lv3
+- Every pet you haven't maxed, grouped by map, with the best mob to farm and where to find it
 - Filter by genus or map, or search by name
 - Click a pet to see a map of where its mob spawns
+- Use it as an overlay on top of the game or as a normal window, with its own taskbar and tray icon
+- Settings for opacity, the popup, the tray and updates (gear icon)
 
-Works on **Global** servers (EU/NA) on Windows 10 and 11.
+Works on **Global** servers (EU/NA) on Windows 10 and 11. Windows 10 needs the
+[WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/), which most PCs already have.
 
 ## Get started
 
@@ -24,7 +27,9 @@ Works on **Global** servers (EU/NA) on Windows 10 and 11.
 That's it. Your progress loads when you enter the world, and the overlay keeps count as you farm.
 When a new version is out, an **Update** button shows up in the title bar. One click and it updates itself.
 
-Play in **windowed** or **borderless** mode so the overlay can stay on top.
+Play in **windowed** or **borderless** mode so the overlay can stay on top. Prefer it outside the game?
+Open the settings (gear icon) and switch to **Window**. Closing it keeps it running in the tray, still
+counting souls; quit from the tray icon's menu.
 
 ### "Windows protected your PC"?
 
@@ -45,8 +50,9 @@ Still, NCSOFT hasn't approved it, and their rules ban unauthorized programs.
 
 | You see | Try this |
 | --- | --- |
-| `waiting for sync` | Go back to character select and enter the world again. |
-| `game not detected` | Make sure the game is running. |
+| `Waiting for sync` | Go back to character select and enter the world again. |
+| `Game not detected` | Make sure the game is running. |
+| A message about WebView2 | Install the [WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/) (Evergreen), then reopen the overlay. |
 | `Npcap missing` | Install [Npcap](https://npcap.com/#download), then reopen the overlay. |
 | `Capture failed` | Right-click the exe and choose **Run as administrator**. |
 | Numbers don't match the game | Re-enter the world. The game is always right. |

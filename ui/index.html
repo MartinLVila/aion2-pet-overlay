@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Aion 2 Pet Overlay</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body class="overlay">
+<div class="app">
+  <header class="bar pywebview-drag-region">
+    <span class="logo" data-icon="18"></span>
+    <h1>Pets to Lv3</h1>
+    <div class="overall"><span class="num" id="overall-text"></span><div class="track"><i id="overall-bar"></i></div></div>
+    <button class="update" type="button" id="update" hidden></button>
+    <div class="status" id="status"><span class="dot"></span><span id="status-text">Starting</span></div>
+    <button class="icon-btn" type="button" id="gear" title="Settings" aria-label="Settings" aria-pressed="false">
+      <svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><path d="M12 2.8v2.4M12 18.8v2.4M4.2 7.5l2.1 1.2M17.7 15.3l2.1 1.2M4.2 16.5l2.1-1.2M17.7 8.7l2.1-1.2"/></svg></button>
+    <button class="icon-btn overlay-only" type="button" id="collapse" title="Collapse" aria-label="Collapse">
+      <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+    <button class="icon-btn overlay-only" type="button" id="close" title="Close" aria-label="Close">
+      <svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </header>
+
+  <div class="body" id="body">
+    <section class="now" id="now" aria-live="polite"></section>
+
+    <div class="tools" id="tools">
+      <div class="chips" id="chips"></div>
+      <div class="filters">
+        <select id="map-filter" aria-label="Map"></select>
+        <label class="search">
+          <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>
+          <input type="search" id="q" placeholder="Search pet, mob or zone" aria-label="Search">
+        </label>
+      </div>
+    </div>
+
+    <div class="main" id="main">
+      <div class="list" id="list" role="listbox" aria-label="Pets still short of level 3"></div>
+      <aside class="map" id="map" hidden></aside>
+    </div>
+
+    <section class="settings" id="settings" hidden aria-label="Settings">
+      <div class="settings-head"><h2>Settings</h2><button class="btn primary" type="button" id="settings-done">Done</button></div>
+
+      <div class="set-group">
+        <h3>Display</h3>
+        <div class="segmented" role="radiogroup" aria-label="Display mode">
+          <button class="seg-opt" type="button" role="radio" data-mode="overlay">
+            <svg viewBox="0 0 34 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1" y="1" width="32" height="22" rx="2" opacity=".45"/><rect x="4" y="4" width="14" height="9" rx="1.5" fill="currentColor" fill-opacity=".25"/></svg>
+            <b>Overlay</b><span>Floats on top of the game, no frame. Drag the bar to move it.</span></button>
+          <button class="seg-opt" type="button" role="radio" data-mode="window">
+            <svg viewBox="0 0 34 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="2" width="28" height="19" rx="2"/><path d="M3 6.5h28"/></svg>
+            <b>Window</b><span>A normal window you can minimize and Alt-Tab to, outside the game.</span></button>
+        </div>
+        <div class="set-row" id="row-opacity">
+          <div class="lbl"><b>Overlay opacity</b><span>Lower it to see more of the game behind.</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><input type="range" id="set-opacity" min="50" max="100" step="5" aria-label="Overlay opacity"><span class="range-val num" id="opacity-val"></span></div>
+        </div>
+        <div class="set-row" id="row-ontop">
+          <div class="lbl"><b>Keep the window on top</b><span id="ontop-note"></span></div>
+          <label class="switch"><input type="checkbox" id="set-ontop" aria-label="Keep the window on top"><i></i></label>
+        </div>
+      </div>
+
+      <div class="set-group">
+        <h3>Soul popup</h3>
+        <div class="set-row">
+          <div class="lbl"><b>Show a popup for each soul</b><span>Pet name, souls gained and how many are left.</span></div>
+          <label class="switch"><input type="checkbox" id="set-toast" aria-label="Show a popup for each soul"><i></i></label>
+        </div>
+        <div class="set-row" id="row-toast-pos">
+          <div class="lbl"><b>Position</b></div>
+          <select id="set-toast-pos" aria-label="Popup position"><option value="top">Top of the screen</option><option value="under">Under the overlay</option></select>
+        </div>
+        <div class="set-row" id="row-toast-time">
+          <div class="lbl"><b>Stays for</b></div>
+          <select id="set-toast-time" aria-label="Popup duration"><option value="3">3 seconds</option><option value="5">5 seconds</option><option value="8">8 seconds</option></select>
+        </div>
+      </div>
+
+      <div class="set-group">
+        <h3>Taskbar and tray</h3>
+        <div class="set-row">
+          <div class="lbl"><b>Show an icon in the system tray</b><span>Click it to bring the app back.</span></div>
+          <label class="switch"><input type="checkbox" id="set-tray" aria-label="Show an icon in the system tray"><i></i></label>
+        </div>
+        <div class="set-row" id="row-close-tray">
+          <div class="lbl"><b>Closing keeps it running in the tray</b><span>Souls are still counted while it's hidden. Quit from the tray menu.</span></div>
+          <label class="switch"><input type="checkbox" id="set-close-tray" aria-label="Closing keeps it running in the tray"><i></i></label>
+        </div>
+      </div>
+
+      <div class="set-group">
+        <h3>Updates</h3>
+        <div class="set-row">
+          <div class="lbl"><b>Check for updates when it starts</b><span>Shows an Update button when a new version is out.</span></div>
+          <label class="switch"><input type="checkbox" id="set-updates" aria-label="Check for updates when it starts"><i></i></label>
+        </div>
+      </div>
+
+      <div class="set-group about">
+        <h3>About</h3>
+        <span>Aion 2 Pet Overlay <span class="num" id="version"></span></span>
+        <span>Pet data and world maps from <span class="link" data-url="https://metabot.gg/en/aion-2/mounts">MetaBot.GG</span>.
+          Source on <span class="link" data-url="https://github.com/MartinLVila/aion2-pet-overlay">GitHub</span>.</span>
+      </div>
+    </section>
+  </div>
+</div>
+<svg class="grip" id="grip" viewBox="0 0 16 16" aria-hidden="true"><path d="M14 6L6 14M14 10l-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+<script src="common.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

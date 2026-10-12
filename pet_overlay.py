@@ -7,19 +7,20 @@ is added on top.
     python pet_overlay.py
 
 Start it BEFORE entering the world (or re-enter from character select).
-Progress is saved between sessions. Drag the title bar to move, "–" collapses,
-"x" closes, the corner grip resizes. Click a pet to see where its mob spawns.
+The UI is HTML (ui/) in a WebView2 window: either a borderless overlay over the
+game or a normal window, chosen in Settings. Click a pet to see where its mob
+spawns. Progress and settings are saved between sessions.
 """
+import base64
+import copy
+import ctypes
+import io
 import json
 import os
 import queue
 import sys
 import threading
-import tkinter as tk
 import webbrowser
-from tkinter import ttk
-
-from PIL import ImageTk
 
 import pet_map
 import pet_protocol as proto
@@ -29,13 +30,35 @@ from version import __version__
 with open(os.path.join(proto.RES_DIR, "data", "pets.json"), encoding="utf-8") as _f:
     PETS = {int(k): v for k, v in json.load(_f).items()}
 UI_FILE = os.path.join(proto.APP_DIR, "pet_overlay_ui.json")
+UI_DIR = os.path.join(proto.RES_DIR, "ui")
+ICON_ICO = os.path.join(proto.RES_DIR, "assets", "icon.ico")
+ICON_PNG = os.path.join(proto.RES_DIR, "assets", "icon.png")
+APP_ID = "MartinLVila.Aion2PetOverlay"
+TITLE = "Aion 2 Pet Overlay"
 
 TOTAL = sum(proto.REQ)  # 105 souls from nothing to level 3
-ALL_MAPS = "All maps"
-GENUS_ORDER = ["Cogni", "Natura", "Fera", "Varian"]  # usual farming priority
-GENUS_COLOR = {"Cogni": "#e8a33d", "Fera": "#6cc070", "Natura": "#58b4e8", "Varian": "#c27be0", "Special": "#999"}
-BG, PANEL, FIELD, BAR = "#16181d", "#1d2027", "#22252c", "#0e0f12"
-FG, DIM, ACCENT, DONE = "#e6e6e6", "#8a8f98", "#ffd166", "#6cc070"
+GENERA = ["Cogni", "Natura", "Fera", "Varian"]
+SURFACE = "#121821"
+MAP_SIZE = (768, 432)  # twice the panel size, sharp on high-DPI screens
+OFF_SCREEN = -20000     # where the popup waits between souls
+
+DEFAULTS = {
+    "mode": "overlay",        # "overlay" (borderless, over the game) or "window" (normal window)
+    "opacity": 92,            # overlay background, percent
+    "on_top": False,          # window mode only; the overlay is always on top
+    "toast": True,
+    "toast_pos": "top",       # "top" of the screen or "under" the overlay
+    "toast_time": 5,
+    "tray": True,
+    "close_to_tray": True,
+    "check_updates": True,
+    "genus": {g: True for g in GENERA},
+    "no_mob": False,
+    "map": "",
+    "geometry": {"overlay": [60, 120, 900, 560], "window": [None, None, 1040, 680]},  # x, y, width, height
+}
+CHOICES = {"mode": ("overlay", "window"), "toast_pos": ("top", "under"), "toast_time": (3, 5, 8)}
+FLAGS = ("on_top", "toast", "tray", "close_to_tray", "check_updates", "no_mob")
 
 
 def remaining(level, pts):
@@ -54,208 +77,230 @@ def progress_text(level, pts):
     return text
 
 
-class Overlay:
-    def __init__(self, tracker=None):
+# ---------------------------------------------------------------- settings
+
+def clean_settings(raw, base=None):
+    """Merges `raw` into `base` (defaults if None), dropping unknown keys and bad values."""
+    s = copy.deepcopy(base or DEFAULTS)
+    for key, allowed in CHOICES.items():
+        if raw.get(key) in allowed:
+            s[key] = raw[key]
+    for key in FLAGS:
+        if isinstance(raw.get(key), bool):
+            s[key] = raw[key]
+    if isinstance(raw.get("opacity"), (int, float)):
+        s["opacity"] = max(50, min(100, int(raw["opacity"])))
+    if isinstance(raw.get("map"), str):
+        s["map"] = "" if raw["map"] == "All maps" else raw["map"]
+    if isinstance(raw.get("genus"), dict):
+        s["genus"] = {g: bool(raw["genus"].get(g, s["genus"][g])) for g in GENERA}
+    geometry = raw.get("geometry")
+    if isinstance(geometry, dict):
+        for mode in CHOICES["mode"]:
+            g = geometry.get(mode)
+            if isinstance(g, list) and len(g) == 4 and all(v is None or isinstance(v, int) for v in g):
+                s["geometry"][mode] = g
+    return s
+
+
+def load_settings(path=UI_FILE):
+    """Saved settings over the defaults. Also reads v1's Tk format ("geom": "WxH+X+Y", "alpha": 0.9)."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            raw = json.load(f)
+    except (OSError, ValueError):
+        raw = {}
+    if not isinstance(raw, dict):
+        raw = {}
+    s = clean_settings(raw)
+    geom = raw.get("geom")
+    if isinstance(geom, str) and "geometry" not in raw:
+        try:
+            size, x, y = geom.split("+")
+            w, h = size.split("x")
+            s["geometry"]["overlay"] = [int(x), int(y), int(w), int(h)]
+        except ValueError:
+            pass
+    if isinstance(raw.get("alpha"), (int, float)) and "opacity" not in raw:
+        s["opacity"] = max(50, min(100, round(raw["alpha"] * 100)))
+    return s
+
+
+def ui_pets():
+    """Pet data for the page: everything but the map tiles, which stay on this side."""
+    out = {}
+    for pid, p in PETS.items():
+        spawn = p.get("spawn")
+        out[pid] = {k: p.get(k) for k in ("genus", "name", "mob", "more", "lvl", "zone", "map")}
+        out[pid]["spawn"] = {"dots": spawn["dots"], "link": spawn.get("link")} if spawn and spawn["dots"] else None
+    return out
+
+
+# ---------------------------------------------------------------- bridge
+
+class Api:
+    """Methods the page calls as window.pywebview.api.<name>(...). Names starting with _ stay private."""
+
+    def __init__(self, app):
+        self._app = app
+
+    def init(self):
+        return self._app.ui_payload()
+
+    def ready(self):
+        self._app.on_ready()
+
+    def save_settings(self, changes):
+        return self._app.update_settings(changes if isinstance(changes, dict) else {})
+
+    def get_map(self, pid):
+        return self._app.map_uri(int(pid))
+
+    def open_url(self, url):
+        if isinstance(url, str) and url.startswith("https://"):
+            webbrowser.open(url)
+
+    def close(self):
+        self._app.close_main()
+
+    def set_collapsed(self, collapsed, bar_height):
+        self._app.set_collapsed(bool(collapsed), int(bar_height))
+
+    def resize(self, width, height):
+        if self._app.window:
+            self._app.window.resize(int(width), int(height))
+
+    def start_update(self):
+        self._app.start_update()
+
+
+# ---------------------------------------------------------------- app
+
+class App:
+    def __init__(self, tracker=None, settings_path=UI_FILE, selftest=False):
         self.tracker = tracker or proto.Tracker()
+        self.settings_path = settings_path
+        self.settings = load_settings(settings_path)
         self.events = queue.Queue()
+        self.api = Api(self)
+        self.window = self.toast = self.tray = None
         self.capturing = False
         self.error = None
-        self.flash = {}  # pet id -> refresh ticks left highlighted
-        self.toast_win = self.toast_job = None
-        self.collapsed = False
         self.update_info = None
-        self.updating = False
-        self.ui = self.load_ui()
+        self.update_status = None   # None, "available", "downloading", "failed"
+        self.update_progress = 0.0
+        self.hidden = False         # main window hidden to the tray
+        self.collapsed = False
+        self.expanded_height = None
+        self.quitting = False
+        self.selftest = selftest
+        self.ready_seen = threading.Event()
+        self.maps = {}              # pet id -> data URI
+        self.toast_timer = None
+        self.lock = threading.RLock()
 
-        root = self.root = tk.Tk()
-        root.title("Pets Lv3")
-        root.overrideredirect(True)
-        root.attributes("-topmost", True)
-        root.attributes("-alpha", self.ui.get("alpha", 0.9))
-        root.configure(bg=BG)
-        root.geometry(self.ui.get("geom", "620x460+60+120"))
-        self.style()
+    # ---------------------------------------------------------- data for the page
 
-        # title bar (drag handle)
-        bar = tk.Frame(root, bg=BAR)
-        bar.pack(fill="x")
-        self.title = tk.Label(bar, bg=BAR, fg=ACCENT, font=("Segoe UI", 9, "bold"), anchor="w")
-        self.title.pack(side="left", padx=6, pady=3, fill="x", expand=True)
-        for label, command in (("x", self.quit), ("–", self.toggle)):
-            button = tk.Label(bar, text=label, bg=BAR, fg=DIM, font=("Segoe UI", 10, "bold"), padx=7, cursor="hand2")
-            button.pack(side="right")
-            button.bind("<Button-1>", lambda e, c=command: c())
-        for widget in (bar, self.title):
-            widget.bind("<ButtonPress-1>", self.drag_start)
-            widget.bind("<B1-Motion>", self.drag_move)
-        # shown only when a newer release exists; lives in the title bar so it's visible when collapsed
-        self.update_button = tk.Label(bar, bg=ACCENT, fg=BAR, font=("Segoe UI", 8, "bold"), padx=8, cursor="hand2")
-        self.update_button.bind("<Button-1>", lambda e: self.start_update())
+    def state_payload(self):
+        t = self.tracker
+        return {"levels": t.levels, "points": t.points, "extra": t.extra, "recent": t.recent,
+                "synced": t.synced, "capturing": self.capturing, "error": self.error}
 
-        self.body = tk.Frame(root, bg=BG)
-        self.body.pack(fill="both", expand=True)
+    def update_payload(self):
+        if not self.update_status:
+            return None
+        return {"status": self.update_status, "version": self.update_info["version"], "progress": self.update_progress}
 
-        # what you're farming right now
-        recent = tk.Frame(self.body, bg=PANEL)
-        recent.pack(fill="x", padx=6, pady=4)
-        self.recent_labels = [tk.Label(recent, bg=PANEL, fg=FG, anchor="w") for _ in range(3)]
+    def ui_payload(self):
+        return {"version": __version__, "pets": ui_pets(), "state": self.state_payload(),
+                "settings": self.settings, "update": self.update_payload()}
 
-        # filters
-        filters = tk.Frame(self.body, bg=BG)
-        filters.pack(fill="x", padx=6, pady=(0, 4))
-        self.genus = {}
-        for g in GENUS_ORDER:
-            var = tk.BooleanVar(value=self.ui.get("genus", {}).get(g, True))
-            self.genus[g] = var
-            self.checkbox(filters, g, var, GENUS_COLOR[g], bold=True)
-        self.no_mob = tk.BooleanVar(value=self.ui.get("no_mob", False))
-        self.checkbox(filters, "chest/shop only", self.no_mob, DIM).pack_configure(padx=(6, 0))
-
-        search_row = tk.Frame(self.body, bg=BG)
-        search_row.pack(fill="x", padx=6, pady=(0, 4))
-        maps = sorted({p["map"] for p in PETS.values() if p.get("map")})
-        self.map = tk.StringVar(value=self.ui.get("map", ALL_MAPS) if self.ui.get("map") in maps else ALL_MAPS)
-        combo = ttk.Combobox(search_row, textvariable=self.map, values=[ALL_MAPS] + maps, state="readonly", width=24)
-        combo.pack(side="left")
-        combo.bind("<<ComboboxSelected>>", lambda e: self.refresh())
-        self.search = tk.StringVar()
-        self.search.trace_add("write", lambda *a: self.refresh())
-        tk.Entry(search_row, textvariable=self.search, bg=FIELD, fg=FG, insertbackground=FG, relief="flat",
-                 font=("Segoe UI", 9)).pack(side="left", fill="x", expand=True, padx=(6, 0), ipady=2)
-
-        # pet list; clicking a row shows its mob's spawn map on the right
-        content = tk.Frame(self.body, bg=BG)
-        content.pack(fill="both", expand=True, pady=(0, 6))
-        columns = (("pet", "Pet", 130, "w"), ("lv", "Lv", 36, "center"), ("left", "Left", 52, "center"),
-                   ("mob", "Mob (level)", 170, "w"), ("zone", "Zone · Map", 200, "w"))
-        self.tree = ttk.Treeview(content, columns=[c[0] for c in columns], show="headings", selectmode="browse")
-        for key, heading, width, anchor in columns:
-            self.tree.heading(key, text=heading, command=lambda k=key: self.sort_by(k))
-            self.tree.column(key, width=width, anchor=anchor, stretch=key in ("mob", "zone"))
-        for g, color in GENUS_COLOR.items():
-            self.tree.tag_configure(g, foreground=color)
-        self.tree.tag_configure("flash", background="#3b3520")
-        self.scroll = ttk.Scrollbar(content, orient="vertical", command=self.tree.yview)
-        self.tree.configure(yscrollcommand=self.scroll.set)
-        self.scroll.pack(side="right", fill="y")
-        self.tree.pack(fill="both", expand=True, padx=(6, 0))
-        self.tree.bind("<ButtonRelease-1>", self.on_row_click)
-        self.sort = self.ui.get("sort", "left")
-        self.build_map_panel(content)
-
-        grip = tk.Label(root, text="◢", bg=BG, fg=DIM, cursor="size_nw_se")
-        grip.place(relx=1, rely=1, anchor="se")
-        grip.bind("<B1-Motion>", self.resize)
-
-        self.refresh()
-        root.after(300, self.pump)
-
-    def style(self):
-        s = ttk.Style(self.root)
-        s.theme_use("clam")
-        s.configure("Treeview", background=BG, fieldbackground=BG, foreground=FG, rowheight=20, borderwidth=0,
-                    font=("Segoe UI", 9))
-        s.configure("Treeview.Heading", background=FIELD, foreground=DIM, borderwidth=0, font=("Segoe UI", 8, "bold"))
-        s.map("Treeview", background=[("selected", "#2d3340")])
-        s.configure("TCombobox", fieldbackground=FIELD, background=FIELD, foreground=FG)
-        s.map("TCombobox", fieldbackground=[("readonly", FIELD)], foreground=[("readonly", FG)],
-              selectbackground=[("readonly", FIELD)], selectforeground=[("readonly", FG)])
-
-    def build_map_panel(self, parent):
-        """Spawn map of the clicked mob. Packed only while a row is selected."""
-        self.map_pid = None
-        self.map_image = None  # PhotoImage must stay referenced or Tk drops it
-        panel = self.map_panel = tk.Frame(parent, bg=PANEL)
-        head = tk.Frame(panel, bg=PANEL)
-        head.pack(fill="x")
-        self.map_title = tk.Label(head, bg=PANEL, fg=ACCENT, font=("Segoe UI", 9, "bold"), anchor="w")
-        self.map_title.pack(side="left", padx=6, pady=3, fill="x", expand=True)
-        close = tk.Label(head, text="x", bg=PANEL, fg=DIM, font=("Segoe UI", 10, "bold"), padx=7, cursor="hand2")
-        close.pack(side="right")
-        close.bind("<Button-1>", lambda e: self.hide_map())
-        frame = tk.Frame(panel, bg=pet_map.WATER, width=pet_map.WIDTH, height=pet_map.HEIGHT)
-        frame.pack(padx=6)
-        frame.pack_propagate(False)
-        self.map_view = tk.Label(frame, bg=pet_map.WATER, fg=DIM, font=("Segoe UI", 9), bd=0)
-        self.map_view.pack(fill="both", expand=True)
-        foot = tk.Frame(panel, bg=PANEL)
-        foot.pack(fill="x", padx=6, pady=3)
-        self.map_info = tk.Label(foot, bg=PANEL, fg=DIM, font=("Segoe UI", 8), anchor="w")
-        self.map_info.pack(side="left")
-        self.map_link = tk.Label(foot, text="Interactive map · MetaBot.GG ↗", bg=PANEL, fg="#58b4e8",
-                                 font=("Segoe UI", 8, "underline"), cursor="hand2")
-        self.map_link.bind("<Button-1>", lambda e: self.open_map_link())
-
-    def on_row_click(self, e):
-        if self.tree.identify_region(e.x, e.y) != "cell":
-            return
-        row = self.tree.identify_row(e.y)
-        if not row:
-            return
-        if int(row) == self.map_pid:
-            self.hide_map()
-        else:
-            self.show_map(int(row))
-
-    def show_map(self, pid):
-        pet = PETS[pid]
-        spawn = pet.get("spawn")
-        self.map_pid = pid
-        self.map_image = None
-        zone = " · ".join(x for x in (pet.get("zone"), pet.get("map")) if x)
-        self.map_title.config(text=f'{pet.get("mob") or "chest / shop"}' + (f"  ·  {zone}" if zone else ""))
-        if not self.map_panel.winfo_ismapped():
-            self.map_panel.pack(side="right", fill="y", padx=(4, 6), before=self.scroll)
-        if spawn and spawn.get("link"):
-            self.map_link.pack(side="right")
-        else:
-            self.map_link.pack_forget()
+    def map_uri(self, pid):
+        spawn = (PETS.get(pid) or {}).get("spawn")
         if not spawn or not spawn["dots"]:
-            self.map_view.config(image="", text="No spawn map for this pet")
-            self.map_info.config(text="")
-            return
-        self.map_view.config(image="", text="Loading map…")
-        self.map_info.config(text=f'{len(spawn["dots"])} spawn points')
-        threading.Thread(target=self.load_map, args=(pid, spawn), daemon=True).start()
+            return None
+        if pid not in self.maps:
+            try:
+                img = pet_map.render(spawn, size=MAP_SIZE, dots=False)
+            except Exception as e:
+                proto.log("map:", e)
+                return None
+            buf = io.BytesIO()
+            img.save(buf, "WEBP", quality=80)
+            self.maps[pid] = "data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode()
+        return self.maps[pid]
 
-    def load_map(self, pid, spawn):
+    def push(self, script):
+        win = self.window
+        if win is None or self.quitting:
+            return
         try:
-            img = pet_map.render(spawn)
+            win.evaluate_js(script)
         except Exception as e:
-            proto.log("map:", e)
-            img = None
-        self.events.put(("map", pid, img))
+            proto.log("ui:", e)
 
-    def on_map(self, pid, img):
-        if pid != self.map_pid:
-            return  # another row was clicked meanwhile
-        if img is None:
-            self.map_view.config(image="", text="Map unavailable (offline?)")
-            return
-        self.map_image = ImageTk.PhotoImage(img)
-        self.map_view.config(image=self.map_image, text="")
+    def push_state(self):
+        self.push(f"window.app && app.setState({json.dumps(self.state_payload())})")
+        self.update_tray_title()
 
-    def hide_map(self):
-        self.map_pid = self.map_image = None
-        self.map_panel.pack_forget()
-        self.tree.selection_set(())
+    def push_update(self):
+        self.push(f"window.app && app.setUpdate({json.dumps(self.update_payload())})")
 
-    def open_map_link(self):
-        spawn = PETS.get(self.map_pid, {}).get("spawn") or {}
-        if spawn.get("link"):
-            webbrowser.open(pet_map.BASE + spawn["link"])
+    # ---------------------------------------------------------- events from capture and updater
 
-    def checkbox(self, parent, text, var, color, bold=False):
-        box = tk.Checkbutton(parent, text=text, variable=var, command=self.refresh, bg=BG, fg=color,
-                             selectcolor=FIELD, activebackground=BG, activeforeground=color, bd=0,
-                             font=("Segoe UI", 8, "bold" if bold else "normal"))
-        box.pack(side="left")
-        return box
+    def handle(self, batch):
+        """Applies a batch of events, then refreshes the page once."""
+        changed = state_changed = False
+        gains = []
+        for ev in batch:
+            kind = ev[0]
+            if kind == "conn":
+                state_changed |= self.capturing != ev[1]
+                self.capturing = ev[1]
+            elif kind == "error":
+                self.error, state_changed = ev[1], True
+            elif kind == "update":
+                self.update_info, self.update_status = ev[1], "available"
+                self.push_update()
+            elif kind == "update_progress":
+                self.update_status, self.update_progress = "downloading", ev[1]
+                self.push_update()
+            elif kind == "update_error":
+                self.update_status = "failed"
+                self.push_update()
+            elif kind == "update_ready":
+                self.quit()
+                updater.restart(sys.executable)
+                return
+            else:
+                self.tracker.on_event(ev)
+                changed = True
+                if kind == "gain":
+                    gains.append((ev[1], ev[2]))
+        if changed:
+            self.tracker.save()
+        for pid, _ in gains:
+            self.push(f"window.app && app.flash({int(pid)})")
+        if changed or state_changed:
+            self.push_state()
+        if gains:
+            self.show_toast(*gains[-1])
 
-    # ---------------------------------------------------------------- data
-
-    def start_capture(self):
-        threading.Thread(target=self.capture, daemon=True).start()
+    def pump(self):
+        while not self.quitting:
+            try:
+                batch = [self.events.get(timeout=0.5)]
+            except queue.Empty:
+                continue
+            while True:
+                try:
+                    batch.append(self.events.get_nowait())
+                except queue.Empty:
+                    break
+            try:
+                self.handle(batch)
+            except Exception as e:
+                proto.log("events:", e)
 
     def capture(self):
         if not proto.npcap_installed():
@@ -268,30 +313,25 @@ class Overlay:
             self.events.put(("error", f"Capture failed ({e.__class__.__name__}); try running as administrator"))
 
     def check_for_update(self):
-        """One request to GitHub at startup; set "check_updates": false in pet_overlay_ui.json to skip it."""
-        if not self.ui.get("check_updates", True):
+        if not self.settings["check_updates"]:
             return
-
-        def worker():
-            try:
-                info = updater.check()
-            except Exception as e:
-                proto.log("update check:", e)
-                return
-            if info:
-                self.events.put(("update", info))
-
-        threading.Thread(target=worker, daemon=True).start()
+        try:
+            info = updater.check()
+        except Exception as e:
+            proto.log("update check:", e)
+            return
+        if info:
+            self.events.put(("update", info))
 
     def start_update(self):
         info = self.update_info
-        if not info or self.updating:
+        if not info or self.update_status == "downloading":
             return
-        if not proto.FROZEN or not info.get("exe_url"):
-            webbrowser.open(info["page"])  # running from source: let the user grab it
+        if not proto.FROZEN or not info.get("exe_url") or self.update_status == "failed":
+            webbrowser.open(info["page"])  # running from source, or the download failed: let the user grab it
             return
-        self.updating = True
-        self.update_button.config(text="Downloading…", cursor="")
+        self.update_status = "downloading"
+        self.push_update()
 
         def worker():
             new = sys.executable + ".new"
@@ -306,206 +346,334 @@ class Overlay:
 
         threading.Thread(target=worker, daemon=True).start()
 
-    def on_update_event(self, ev):
-        if ev[0] == "update":
-            self.update_info = ev[1]
-            self.update_button.config(text=f"↑ Update to v{ev[1]['version']}")
-            self.update_button.pack(side="right", padx=(0, 4), pady=2)
-        elif ev[0] == "update_progress":
-            self.update_button.config(text=f"Downloading… {ev[1]:.0%}")
-        elif ev[0] == "update_error":
-            self.updating = False
-            self.update_button.config(text="Update failed · open page", bg="#e06c6c", cursor="hand2")
-            self.update_info = dict(self.update_info, exe_url=None)  # next click opens the release page
-        elif ev[0] == "update_ready":
-            self.quit()  # saves progress and window settings first
-            updater.restart(sys.executable)
+    # ---------------------------------------------------------- soul popup
 
-    def pump(self):
-        changed = False
+    def show_toast(self, pid, amount):
+        if not self.settings["toast"] or self.toast is None or self.quitting:
+            return
+        pet = PETS.get(pid) or {}
+        level, pts = self.tracker.levels.get(pid, 0), self.tracker.points.get(pid, 0)
+        data = {"name": pet.get("name") or f"Pet {pid}", "genus": pet.get("genus"), "amount": amount,
+                "level": level, "points": pts, "extra": self.tracker.extra.get(pid, 0)}
         try:
-            while True:
-                ev = self.events.get_nowait()
-                if ev[0] == "conn":
-                    self.capturing = ev[1]
-                elif ev[0] == "error":
-                    self.error = ev[1]
-                elif ev[0] == "map":
-                    self.on_map(ev[1], ev[2])
-                elif ev[0].startswith("update"):
-                    self.on_update_event(ev)
-                    if ev[0] == "update_ready":
-                        return  # window is gone
-                else:
-                    self.tracker.on_event(ev)
-                    if ev[0] == "gain":
-                        self.flash[ev[1]] = 8
-                        self.toast(ev[1], ev[2])
-                    changed = True
-        except queue.Empty:
-            pass
-        if changed:
-            self.tracker.save()
-        for pid in list(self.flash):
-            self.flash[pid] -= 1
-            if self.flash[pid] <= 0:
-                del self.flash[pid]
-                changed = True
-        if changed or self.flash:
-            self.refresh()
+            size = self.toast.evaluate_js(f"showToast({json.dumps(data)})") or {}
+            w, h = int(size.get("width", 480)), int(size.get("height", 44))
+            x, y = self.toast_position(w)
+            place_without_focus(self.toast, x, y, w, h)  # never take focus away from the game
+        except Exception as e:
+            proto.log("toast:", e)
+            return
+        if self.toast_timer:
+            self.toast_timer.cancel()
+        self.toast_timer = threading.Timer(self.settings["toast_time"], self.hide_toast)
+        self.toast_timer.daemon = True
+        self.toast_timer.start()
+
+    def toast_position(self, width):
+        win = self.window
+        if (self.settings["toast_pos"] == "under" and self.settings["mode"] == "overlay"
+                and win is not None and not self.hidden):
+            return win.x, win.y + win.height + 6
+        import webview
+        screen = webview.screens[0]
+        return screen.x + (screen.width - width) // 2, screen.y + 16
+
+    def hide_toast(self):
+        if self.toast is not None and not self.quitting:
+            try:
+                place_without_focus(self.toast, OFF_SCREEN, OFF_SCREEN, 60, 20)
+            except Exception as e:
+                proto.log("toast:", e)
+
+    # ---------------------------------------------------------- windows
+
+    def create_main(self):
+        import webview
+        mode = self.settings["mode"]
+        overlay = mode == "overlay"
+        x, y, w, h = self.settings["geometry"][mode]
+        win = webview.create_window(
+            TITLE, os.path.join(UI_DIR, "index.html"), js_api=self.api,
+            width=w, height=h, x=x, y=y, min_size=(420, 40) if overlay else (480, 320),
+            frameless=overlay, easy_drag=False, shadow=not overlay,
+            on_top=overlay or self.settings["on_top"], background_color=SURFACE)
+        win.events.closing += self.on_closing
+        if overlay:
+            def on_shown():
+                # pywebview applies the size before removing the frame, and Windows keeps the client area,
+                # so the window comes out 16x39 px smaller than asked: set it again once it's up
+                win.resize(w, h)
+                round_corners(win)
+                set_opacity(win, self.settings["opacity"])
+            win.events.shown += on_shown
         else:
-            self.update_title()
-        self.root.after(500, self.pump)
+            win.events.shown += lambda: dark_title_bar(win)
+        self.window = win
+        self.hidden = self.collapsed = False
+        return win
 
-    def progress(self, pid):
-        return self.tracker.levels.get(pid, 0), self.tracker.points.get(pid, 0)
+    def on_closing(self, window):
+        """Returning False cancels the close."""
+        if self.quitting or window is not self.window:
+            return True  # quitting, or an old window being replaced after a mode switch
+        if self.settings["tray"] and self.settings["close_to_tray"]:
+            self.hide_main()
+        else:
+            threading.Thread(target=self.quit, daemon=True).start()
+        return False
 
-    def pet_name(self, pid):
-        pet = PETS.get(pid)
-        return pet["name"] if pet and pet["name"] else f"Pet {pid}"
+    def close_main(self):
+        if self.settings["tray"] and self.settings["close_to_tray"]:
+            self.hide_main()
+        else:
+            self.quit()
 
-    def rows(self):
-        query = self.search.get().strip().lower()
-        wanted_map = self.map.get()
-        rows = []
-        for pid, pet in PETS.items():
-            genus = pet["genus"]
-            if genus not in self.genus or not self.genus[genus].get():
-                continue
-            if not pet.get("mob") and not self.no_mob.get():
-                continue
-            if wanted_map != ALL_MAPS and pet.get("map") != wanted_map:
-                continue
-            level, pts = self.progress(pid)
-            left = remaining(level, pts)
-            if not left:
-                continue
-            if pet.get("mob"):
-                mob = f'{pet["mob"]} ({pet["lvl"]})' + (f' +{pet["more"]}' if pet.get("more") else "")
+    def hide_main(self):
+        self.remember_geometry()
+        self.save_settings()
+        self.hidden = True
+        self.window.hide()
+
+    def show_main(self):
+        if self.quitting or self.window is None:
+            return
+        self.hidden = False
+        self.window.show()
+        self.window.restore()
+
+    def switch_mode(self):
+        with self.lock:
+            old = self.window
+            self.create_main()
+            if old is not None:
+                old.destroy()
+
+    def set_collapsed(self, collapsed, bar_height):
+        win = self.window
+        if win is None or self.settings["mode"] != "overlay" or collapsed == self.collapsed:
+            return
+        if collapsed:
+            self.expanded_height = win.height
+            win.resize(win.width, bar_height)
+        else:
+            win.resize(win.width, self.expanded_height or self.settings["geometry"]["overlay"][3])
+        self.collapsed = collapsed
+
+    def remember_geometry(self):
+        win = self.window
+        if win is None or self.hidden:
+            return
+        try:
+            x, y, w, h = win.x, win.y, win.width, win.height
+        except Exception:
+            return
+        if x < -10000 or y < -10000:  # minimized
+            return
+        if self.collapsed:
+            h = self.expanded_height or h
+        self.settings["geometry"][self.settings["mode"]] = [x, y, w, h]
+
+    # ---------------------------------------------------------- settings
+
+    def update_settings(self, changes):
+        changes = {k: v for k, v in changes.items() if k != "geometry"}
+        self.remember_geometry()
+        old = self.settings
+        self.settings = clean_settings(changes, old)
+        self.save_settings()
+        new = self.settings
+        if new["mode"] != old["mode"]:
+            # after this call returns to the page that asked, since that page is about to go away
+            threading.Timer(0.05, self.switch_mode).start()
+        elif new["mode"] == "window" and new["on_top"] != old["on_top"] and self.window:
+            self.window.on_top = new["on_top"]
+        elif new["mode"] == "overlay" and new["opacity"] != old["opacity"] and self.window:
+            set_opacity(self.window, new["opacity"])
+        if new["tray"] != old["tray"]:
+            if new["tray"]:
+                self.start_tray()
             else:
-                mob = "chest / shop"
-            zone = " · ".join(x for x in (pet.get("zone"), pet.get("map")) if x)
-            name = self.pet_name(pid)
-            if query and query not in f"{name} {mob} {zone}".lower():
-                continue
-            rows.append((pid, genus, name, level, left, mob, zone))
-        key = {"pet": lambda r: r[2], "lv": lambda r: (-r[3], r[4]), "left": lambda r: r[4],
-               "mob": lambda r: r[5], "zone": lambda r: (r[6] or "~", r[4])}[self.sort]
-        return sorted(rows, key=key)
+                self.stop_tray()
+                if self.hidden:
+                    self.show_main()
+        return self.settings
 
-    # ---------------------------------------------------------------- UI
+    def save_settings(self):
+        try:
+            with open(self.settings_path, "w", encoding="utf-8") as f:
+                json.dump(self.settings, f, indent=1)
+        except OSError as e:
+            proto.log("settings:", e)
 
-    def refresh(self):
-        top = self.tree.yview()[0]
-        self.tree.delete(*self.tree.get_children())
-        for pid, genus, name, level, left, mob, zone in self.rows():
-            tags = (genus, "flash") if pid in self.flash else (genus,)
-            self.tree.insert("", "end", iid=str(pid), values=(name, level, left, mob, zone), tags=tags)
-        if self.map_pid is not None and self.tree.exists(str(self.map_pid)):
-            self.tree.selection_set(str(self.map_pid))  # keep the mapped row highlighted
-        self.tree.yview_moveto(top)
-        self.update_recent()
-        self.update_title()
+    # ---------------------------------------------------------- tray
 
-    def update_recent(self):
-        shown = [pid for pid in self.tracker.recent if pid in PETS][:3]
-        for i, label in enumerate(self.recent_labels):
-            if i >= len(shown):
-                label.pack_forget()
-                continue
-            pid = shown[i]
-            level, pts = self.progress(pid)
-            label.config(text=f"{self.pet_name(pid)}  ·  Lv{level}  ·  {progress_text(level, pts)}",
-                         fg=ACCENT if i == 0 else GENUS_COLOR.get(PETS[pid]["genus"], FG),
-                         font=("Segoe UI", 10, "bold") if i == 0 else ("Segoe UI", 9))
-            label.pack(fill="x", padx=6, pady=1)
-        if not shown:
-            self.recent_labels[0].config(text="Pick up a soul and I'll tell you how many are left", fg=DIM,
-                                         font=("Segoe UI", 9))
-            self.recent_labels[0].pack(fill="x", padx=6, pady=1)
+    def start_tray(self):
+        if self.tray or self.selftest:
+            return
+        try:
+            import pystray
+            from PIL import Image
+            menu = pystray.Menu(pystray.MenuItem("Show", lambda: self.show_main(), default=True),
+                                pystray.MenuItem("Quit", lambda: self.quit()))
+            self.tray = pystray.Icon("Aion2PetOverlay", Image.open(ICON_PNG), TITLE, menu)
+            self.tray.run_detached()
+            self.update_tray_title()
+        except Exception as e:
+            proto.log("tray:", e)
+            self.tray = None
 
-    def update_title(self):
+    def stop_tray(self):
+        tray, self.tray = self.tray, None
+        if tray:
+            try:
+                tray.stop()
+            except Exception as e:
+                proto.log("tray:", e)
+
+    def update_tray_title(self):
+        if not self.tray:
+            return
         farmable = [pid for pid, p in PETS.items() if p["genus"] != "Special" and p.get("mob")]
         done = sum(1 for pid in farmable if self.tracker.levels.get(pid, 0) >= proto.MAX_LEVEL)
-        if self.error:
-            status = "⚠ " + self.error
-        elif not self.tracker.synced:
-            status = "waiting for sync: enter the world with your character"
-        else:
-            status = f"synced {self.tracker.synced} · {'● capturing' if self.capturing else '○ game not detected'}"
-        self.title.config(text=f"Pets Lv3  {done}/{len(farmable)}   ·   {status}")
-
-    def toast(self, pid, amount):
-        """Floating notice under the overlay, visible even when it's collapsed."""
-        level, pts = self.progress(pid)
-        if not self.toast_win:
-            win = self.toast_win = tk.Toplevel(self.root)
-            win.overrideredirect(True)
-            win.attributes("-topmost", True)
-            win.attributes("-alpha", 0.92)
-            win.configure(bg=BAR)
-            self.toast_label = tk.Label(win, bg=BAR, font=("Segoe UI", 13, "bold"), padx=12, pady=6)
-            self.toast_label.pack()
-        message = f"{self.pet_name(pid)} +{amount}   ·   {progress_text(level, pts)}"
-        maxed = not remaining(level, pts)
-        if maxed and self.tracker.extra.get(pid):
-            message += f"  (+{self.tracker.extra[pid]} wasted, switch mobs)"
-        self.toast_label.config(text=message, fg=DONE if maxed else ACCENT)
-        self.toast_win.deiconify()
-        x = self.root.winfo_x()
-        y = self.root.winfo_y() + self.root.winfo_height() + 6
-        self.toast_win.geometry(f"+{x}+{y}")
-        if self.toast_job:
-            self.root.after_cancel(self.toast_job)
-        self.toast_job = self.root.after(5000, self.toast_win.withdraw)
-
-    def sort_by(self, column):
-        self.sort = column
-        self.refresh()
-
-    def toggle(self):
-        if self.collapsed:
-            self.body.pack(fill="both", expand=True)
-            self.root.geometry(self.expanded_geom)
-        else:
-            self.expanded_geom = self.root.geometry()
-            self.body.pack_forget()
-            self.root.geometry(f"{self.root.winfo_width()}x24")
-        self.collapsed = not self.collapsed
-
-    def drag_start(self, e):
-        self.drag_offset = (e.x_root - self.root.winfo_x(), e.y_root - self.root.winfo_y())
-
-    def drag_move(self, e):
-        dx, dy = self.drag_offset
-        self.root.geometry(f"+{e.x_root - dx}+{e.y_root - dy}")
-
-    def resize(self, e):
-        width = max(380, e.x_root - self.root.winfo_x())
-        height = max(150, e.y_root - self.root.winfo_y())
-        self.root.geometry(f"{width}x{height}")
-
-    def load_ui(self):
         try:
-            with open(UI_FILE, encoding="utf-8") as f:
-                return json.load(f)
-        except (OSError, ValueError):
-            return {}
+            self.tray.title = f"{TITLE}: {done} of {len(farmable)} pets at Lv3"
+        except Exception:
+            pass
+
+    # ---------------------------------------------------------- lifecycle
+
+    def on_ready(self):
+        self.ready_seen.set()
+        if self.selftest:
+            threading.Timer(1.0, self.quit).start()
 
     def quit(self):
-        if self.collapsed:
-            self.toggle()
-        ui = {"geom": self.root.geometry(), "alpha": self.ui.get("alpha", 0.9), "sort": self.sort,
-              "map": self.map.get(), "no_mob": self.no_mob.get(),
-              "genus": {g: var.get() for g, var in self.genus.items()}}
-        try:
-            with open(UI_FILE, "w", encoding="utf-8") as f:
-                json.dump(ui, f)
-        except OSError:
-            pass
+        with self.lock:
+            if self.quitting:
+                return
+            self.remember_geometry()
+            self.quitting = True
+        self.save_settings()
         self.tracker.save()
-        self.root.destroy()
+        self.stop_tray()
+        if self.toast_timer:
+            self.toast_timer.cancel()
+        for win in (self.window, self.toast):
+            if win is not None:
+                try:
+                    win.destroy()
+                except Exception as e:
+                    proto.log("close:", e)
 
+    def background(self):
+        """Runs once the GUI loop is up."""
+        if self.toast.events.loaded.wait(20):
+            style_toast(self.toast)
+            round_corners(self.toast)
+        if self.settings["tray"]:
+            self.start_tray()
+        if not self.selftest:
+            threading.Thread(target=self.capture, daemon=True).start()
+            threading.Thread(target=self.check_for_update, daemon=True).start()
+        else:
+            def watchdog():  # the page must call ready() or the selftest fails
+                if not self.ready_seen.wait(60):
+                    proto.log("selftest: the page never loaded")
+                    self.quit()
+            threading.Thread(target=watchdog, daemon=True).start()
+        self.pump()
+
+    def run(self):
+        import webview
+        # The popup window is created first: pywebview keeps running while any window is open, so the
+        # main window can be replaced (mode switch) without the app exiting. It stays "shown" but parked
+        # off screen, because WebView2 stops drawing in a hidden window.
+        self.toast = webview.create_window(
+            "Soul pickup", os.path.join(UI_DIR, "toast.html"), width=480, height=44, x=OFF_SCREEN, y=OFF_SCREEN,
+            min_size=(60, 20), frameless=True, easy_drag=False, on_top=True, focus=False,
+            shadow=False, resizable=False, background_color=SURFACE)
+        self.create_main()
+        webview.start(self.background, gui="edgechromium", icon=ICON_ICO,
+                      debug=bool(os.environ.get("PET_OVERLAY_DEBUG")))
+
+
+# ---------------------------------------------------------------- Windows helpers
+
+def hwnd_of(win):
+    return win.native.Handle.ToInt64()
+
+
+def place_without_focus(win, x, y, width, height):
+    """Shows `win` topmost at x, y (logical px) sized width x height, without activating it.
+    pywebview's own move/resize/show all activate the window, which would pull focus out of the game."""
+    hwnd = ctypes.c_void_p(hwnd_of(win))
+    scale = ctypes.windll.user32.GetDpiForWindow(hwnd) / 96 or 1
+    HWND_TOPMOST, SWP_NOACTIVATE, SWP_SHOWWINDOW = -1, 0x10, 0x40
+    ctypes.windll.user32.SetWindowPos(hwnd, ctypes.c_void_p(HWND_TOPMOST), int(x * scale), int(y * scale),
+                                      int(width * scale), int(height * scale), SWP_NOACTIVATE | SWP_SHOWWINDOW)
+
+
+def round_corners(win):
+    """Windows 11 rounds a borderless window's corners and draws its border in the app's line color.
+    (CSS can't: pywebview's transparent windows show grey where the page is see-through.)"""
+    try:
+        hwnd = ctypes.c_void_p(hwnd_of(win))
+        DWMWA_WINDOW_CORNER_PREFERENCE, DWMWCP_ROUND = 33, ctypes.c_int(2)
+        DWMWA_BORDER_COLOR, line = 34, ctypes.c_uint(0x00453328)  # COLORREF 0x00BBGGRR of #283345
+        ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE,
+                                                   ctypes.byref(DWMWCP_ROUND), ctypes.sizeof(DWMWCP_ROUND))
+        ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, DWMWA_BORDER_COLOR, ctypes.byref(line), ctypes.sizeof(line))
+    except Exception as e:
+        proto.log("corners:", e)
+
+
+def set_opacity(win, percent):
+    """Whole-window opacity, like v1's Tk overlay. WebView2 keeps drawing in a layered window."""
+    try:
+        from System import Func, Type
+        form = win.native
+
+        def apply():
+            form.Opacity = max(50, min(100, percent)) / 100
+        form.Invoke(Func[Type](apply))
+    except Exception as e:
+        proto.log("opacity:", e)
+
+
+def style_toast(win):
+    """No taskbar button or Alt-Tab entry for the popup, and rounded corners on Windows 11."""
+    try:
+        hwnd = ctypes.c_void_p(hwnd_of(win))
+        GWL_EXSTYLE, WS_EX_TOOLWINDOW, WS_EX_APPWINDOW, WS_EX_NOACTIVATE = -20, 0x80, 0x40000, 0x8000000
+        style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+        style = (style | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE) & ~WS_EX_APPWINDOW
+        ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
+    except Exception as e:
+        proto.log("toast style:", e)
+
+
+def dark_title_bar(win):
+    """Dark native title bar in window mode (Windows 10 2004+ / 11)."""
+    try:
+        DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+        on = ctypes.c_int(1)
+        ctypes.windll.dwmapi.DwmSetWindowAttribute(ctypes.c_void_p(hwnd_of(win)), DWMWA_USE_IMMERSIVE_DARK_MODE,
+                                                   ctypes.byref(on), ctypes.sizeof(on))
+    except Exception as e:
+        proto.log("title bar:", e)
+
+
+def webview2_available():
+    from webview.platforms import winforms
+    return winforms.is_chromium
+
+
+def message_box(text, title=TITLE):
+    MB_ICONWARNING = 0x30
+    ctypes.windll.user32.MessageBoxW(None, text, title, MB_ICONWARNING)
+
+
+# ---------------------------------------------------------------- entry points
 
 def run_selftest():
     """`--selftest`: offline checks, also used by CI against the built exe."""
@@ -533,14 +701,25 @@ def run_swap_test():
     sys.exit(0)
 
 
-if __name__ == "__main__":
+def main():
     if "--selftest" in sys.argv:
         run_selftest()
     if "--selftest-update" in sys.argv:
         run_swap_test()
     updater.cleanup()
     proto.log(f"started v{__version__}")
-    overlay = Overlay()
-    overlay.start_capture()
-    overlay.check_for_update()
-    overlay.root.mainloop()
+    try:
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(APP_ID)  # own taskbar button and icon
+    except Exception:
+        pass
+    if not webview2_available():
+        proto.log("WebView2 runtime missing")
+        message_box("This app needs the Microsoft Edge WebView2 Runtime, which is missing on this PC.\n\n"
+                    "Your browser will open the download page. Install the Evergreen runtime, then start the app again.")
+        webbrowser.open("https://developer.microsoft.com/microsoft-edge/webview2/")
+        sys.exit(1)
+    App().run()
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Soul pickup</title>
+<link rel="stylesheet" href="app.css">
+<style>
+  /* Python sizes the window to the card; Windows 11 rounds its corners */
+  body { background: var(--surface); }
+  .card { display: inline-flex; align-items: center; gap: 14px; padding: 10px 16px; white-space: nowrap; }
+  .name { font-weight: 600; font-size: 15px; }
+  .gain { color: var(--accent); font-weight: 700; font-size: 15px; }
+  .left { color: var(--muted); }
+  .left.done { color: var(--fera); }
+  .waste { color: var(--warn); }
+  .levels { width: 140px; }
+</style>
+</head>
+<body>
+<div class="card" id="card"></div>
+<script src="common.js"></script>
+<script>
+// Called by Python; returns the card's size so the window can be fitted to it.
+function showToast(t) {
+  const left = soulsLeft(t.level, t.points);
+  const card = document.getElementById("card");
+  card.innerHTML = `<span class="name">${esc(t.name)}</span><span class="gain num">+${t.amount}</span>
+    ${levelBar(t.level, t.points, t.genus)}
+    <span class="left num ${left ? "" : "done"}">${left ? `${left} to Lv3` : "Lv3 done"}</span>
+    ${!left && t.extra ? `<span class="waste num">${t.extra} wasted, switch mobs</span>` : ""}`;
+  const r = card.getBoundingClientRect();
+  return { width: Math.ceil(r.width), height: Math.ceil(r.height) };
+}
+</script>
+</body>
+</html>

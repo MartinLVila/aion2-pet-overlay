@@ -13,11 +13,15 @@ if ($LASTEXITCODE -ne 0) { throw "selftest failed (source)" }
     --name Aion2PetOverlay `
     --icon assets\icon.ico `
     --add-data "data\pets.json;data" `
+    --add-data "ui;ui" `
+    --add-data "assets\icon.ico;assets" `
+    --add-data "assets\icon.png;assets" `
     --collect-submodules scapy.layers `
+    --hidden-import pystray._win32 `
     pet_overlay.py
 if ($LASTEXITCODE -ne 0) { throw "pyinstaller failed" }
 
-# Run the same checks inside the built exe (bundled data, scapy, Tk).
+# Run the same checks inside the built exe (bundled data, scapy, the WebView2 window).
 $run = Start-Process dist\Aion2PetOverlay.exe -ArgumentList "--selftest" -WorkingDirectory dist -Wait -PassThru
 if ($run.ExitCode -ne 0) {
     if (Test-Path dist\pet_overlay.log) { Get-Content dist\pet_overlay.log }
