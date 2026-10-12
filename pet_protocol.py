@@ -256,7 +256,7 @@ class Decoder:
 def run_sniffer(emit):
     """Blocks forever, emitting decoder events plus ("conn", bool) every 2 s."""
     import psutil
-    from scapy.all import IP, TCP, Raw, conf, sniff
+    from scapy.all import IP, TCP, IPv6, AsyncSniffer, Raw, conf
 
     game_ports = set()
 
@@ -264,9 +264,10 @@ def run_sniffer(emit):
         while True:
             try:
                 pids = {p.pid for p in psutil.process_iter(["name"]) if (p.info["name"] or "").lower() == "aion2.exe"}
+                # Loopback peers are kept on purpose: ExitLag and similar boosters proxy
+                # the game through 127.0.0.1, so that is where the plain stream shows up.
                 ports = {c.laddr[1] for c in psutil.net_connections(kind="tcp")
-                         if c.pid in pids and c.raddr and not c.raddr[0].startswith("127.")
-                         and c.raddr[1] not in (80, 443)}
+                         if c.pid in pids and c.raddr and c.raddr[1] not in (80, 443)}
                 game_ports.clear()
                 game_ports.update(ports)
                 emit(("conn", bool(ports)))
@@ -276,13 +277,32 @@ def run_sniffer(emit):
 
     threading.Thread(target=watch_game, daemon=True).start()
     decoder = Decoder(emit)
+    lock = threading.Lock()
 
     def on_packet(p):
         if Raw in p and TCP in p and p[TCP].dport in game_ports:
-            decoder.segment((p[IP].src, p[TCP].sport, p[TCP].dport), p[TCP].seq, bytes(p[Raw].load))
+            src = p[IP].src if IP in p else p[IPv6].src if IPv6 in p else ""
+            with lock:
+                decoder.segment((src, p[TCP].sport, p[TCP].dport), p[TCP].seq, bytes(p[Raw].load))
 
-    ifaces = [i.network_name for i in conf.ifaces.values() if i.ip and not i.ip.startswith("127.")]
-    sniff(iface=ifaces, filter="tcp and not port 443 and not port 80", prn=on_packet, store=False)
+    # One sniffer per interface: a single multi-interface sniff polls them in turn on
+    # Windows and falls far behind the game. The Npcap loopback adapter is included so
+    # proxied (ExitLag) sessions are seen too.
+    sniffers = []
+    for iface in conf.ifaces.values():
+        if not iface.ip:
+            continue
+        try:
+            s = AsyncSniffer(iface=iface.network_name, filter="tcp and not port 443 and not port 80",
+                             prn=on_packet, store=False)
+            s.start()
+            sniffers.append(s)
+        except Exception as e:
+            log("sniffer", iface.name, e)
+    if not sniffers:
+        raise RuntimeError("no interface could be opened")
+    for s in sniffers:
+        s.join()
 
 
 # ---------------------------------------------------------------- progress
