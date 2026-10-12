@@ -137,10 +137,18 @@ def ui_pets():
     """Pet data for the page: everything but the map tiles, which stay on this side."""
     out = {}
     for pid, p in PETS.items():
-        spawn = p.get("spawn")
-        out[pid] = {k: p.get(k) for k in ("genus", "name", "mob", "more", "lvl", "zone", "map")}
-        out[pid]["spawn"] = {"dots": spawn["dots"], "link": spawn.get("link")} if spawn and spawn["dots"] else None
+        mobs = []
+        for m in p["mobs"]:
+            spawn = m.get("spawn")
+            mobs.append({**{k: m.get(k) for k in ("name", "lvl", "pct", "zones", "kisk")},
+                         "spawn": {"map": spawn.get("map"), "dots": spawn["dots"], "link": spawn.get("link")}
+                         if spawn else None})
+        out[pid] = {"genus": p["genus"], "name": p["name"], "mobs": mobs}
     return out
+
+
+def is_farmable(p):
+    return p["genus"] != "Special" and bool(p["mobs"])
 
 
 # ---------------------------------------------------------------- bridge
@@ -160,8 +168,8 @@ class Api:
     def save_settings(self, changes):
         return self._app.update_settings(changes if isinstance(changes, dict) else {})
 
-    def get_map(self, pid):
-        return self._app.map_uri(int(pid))
+    def get_map(self, pid, mob=0):
+        return self._app.map_uri(int(pid), int(mob))
 
     def open_url(self, url):
         if isinstance(url, str) and url.startswith("https://"):
@@ -211,7 +219,7 @@ class App:
         self.quitting = False
         self.selftest = selftest
         self.ready_seen = threading.Event()
-        self.maps = {}              # pet id -> data URI
+        self.maps = {}              # (pet id, mob index) -> data URI
         self.toast_timer = None
         self.placing = False        # the user is dragging the popup to a new spot
         self.relaunch_event = None  # signalled by a second copy of the app (see main())
@@ -235,11 +243,13 @@ class App:
         return {"version": __version__, "pets": ui_pets(), "state": self.state_payload(),
                 "settings": self.settings, "update": self.update_payload()}
 
-    def map_uri(self, pid):
-        spawn = (PETS.get(pid) or {}).get("spawn")
+    def map_uri(self, pid, mob=0):
+        mobs = (PETS.get(pid) or {}).get("mobs") or []
+        spawn = mobs[mob].get("spawn") if 0 <= mob < len(mobs) else None
         if not spawn or not spawn["dots"]:
             return None
-        if pid not in self.maps:
+        key = (pid, mob)
+        if key not in self.maps:
             try:
                 img = pet_map.render(spawn, size=MAP_SIZE, dots=False)
             except Exception as e:
@@ -247,8 +257,8 @@ class App:
                 return None
             buf = io.BytesIO()
             img.save(buf, "WEBP", quality=80)
-            self.maps[pid] = "data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode()
-        return self.maps[pid]
+            self.maps[key] = "data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode()
+        return self.maps[key]
 
     def push(self, script):
         win = self.window
@@ -607,7 +617,7 @@ class App:
     def update_tray_title(self):
         if not self.tray:
             return
-        farmable = [pid for pid, p in PETS.items() if p["genus"] != "Special" and p.get("mob")]
+        farmable = [pid for pid, p in PETS.items() if is_farmable(p)]
         done = sum(1 for pid in farmable if self.tracker.levels.get(pid, 0) >= proto.MAX_LEVEL)
         try:
             self.tray.title = f"{TITLE}: {done} of {len(farmable)} pets at Lv3"

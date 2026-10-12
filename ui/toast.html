@@ -11,13 +11,13 @@
   .name { font-weight: 600; font-size: 15px; }
   .gain { color: var(--accent); font-weight: 700; font-size: 15px; }
   .left { color: var(--muted); }
-  .left.done { color: var(--fera); }
+  .left.done { color: var(--ok); }
   .waste { color: var(--warn); }
   .levels { width: 140px; }
   .card { cursor: pointer; }
   .placing .card { cursor: move; }
   .hint { color: var(--muted); }
-  .done { height: 26px; padding: 0 10px; border-radius: 5px; border: 0; background: var(--accent); color: var(--accent-ink);
+  .done-btn { height: 26px; padding: 0 10px; border-radius: 5px; border: 0; background: var(--accent); color: var(--accent-ink);
           font: inherit; font-weight: 700; cursor: pointer; }
 </style>
 </head>
@@ -36,7 +36,7 @@ function showToast(t, placing) {
     ${levelBar(t.level, t.points, t.genus)}
     <span class="left num ${left ? "" : "done"}">${left ? `${left} to Lv3` : "Lv3 done"}</span>
     ${!left && t.extra ? `<span class="waste num">${t.extra} wasted, switch mobs</span>` : ""}
-    ${placing ? `<span class="hint">Drag me</span><button class="done" type="button" id="done">Done</button>` : ""}`;
+    ${placing ? `<span class="hint">Drag me</span><button class="done-btn" type="button" id="done">Done</button>` : ""}`;
   const r = card.getBoundingClientRect();
   return { width: Math.ceil(r.width), height: Math.ceil(r.height) };
 }

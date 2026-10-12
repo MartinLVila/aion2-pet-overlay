@@ -5,9 +5,11 @@ See which pets you still need for level 3, and how many souls are left, every ti
 ![Overlay screenshot](docs/screenshot.png)
 
 - A popup on every soul with the pet, the souls you got and how many are left to Lv3
-- Every pet you haven't maxed, grouped by map, with the best mob to farm and where to find it
-- Filter by genus or map, or search by name
-- Click a pet to see a map of where its mob spawns
+- Every pet you haven't maxed, grouped by map, with the mob to farm on each map and its zone.
+  A pet that drops on several maps shows up under each of them
+- Filter by genus or map, or search by pet, mob or zone
+- Click a pet to see every mob that drops it, with level, zones, spawn count and nearest Kibelisk,
+  and a map of where each one spawns
 - Use it as an overlay on top of the game or as a normal window, with its own taskbar and tray icon
 - Settings for opacity, the popup, the tray and updates (gear icon)
 

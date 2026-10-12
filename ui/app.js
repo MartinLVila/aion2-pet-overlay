@@ -7,11 +7,18 @@ let api = null;
 let pets = [], byId = new Map();
 let state = { levels: {}, points: {}, extra: {}, recent: [], synced: null, capturing: false, error: null };
 let cfg = {};
-const ui = { q: "", selected: null, settings: false, collapsed: false, flash: new Set(), maps: new Map() };
+// selected: the clicked row ({id, map}); mob: index into that pet's mobs shown on the minimap
+const ui = { q: "", selected: null, mob: 0, settings: false, collapsed: false, flash: new Set(), maps: new Map() };
 
 const progress = id => [state.levels[id] || 0, state.points[id] || 0];
 const remaining = id => soulsLeft(...progress(id));
-const isFarmable = p => p.genus !== "Special" && p.mob;
+const isFarmable = p => p.genus !== "Special" && p.mobs.length > 0;
+// a pet's mobs are sorted surest drop first, then most spawns, so the first match is the best one to farm
+const mobMaps = m => m.zones.map(z => z[1]);
+const petMaps = p => [...new Set(p.mobs.flatMap(mobMaps))];
+const mobsOn = (p, map) => map ? p.mobs.filter(m => mobMaps(m).includes(map)) : p.mobs;
+const zonesOn = (m, map) => [...new Set(m.zones.filter(z => !map || z[1] === map).map(z => z[0]))];
+const chance = m => m.pct !== null && m.pct < 100 ? ` <em class="num">${m.pct}%</em>` : "";
 
 // ---------- rendering ----------
 function renderHeader() {
@@ -51,9 +58,20 @@ function renderNow() {
     <div class="now-head"><div class="now-name">${esc(p.name)}</div>
       <div class="now-left num">${left || "Lv3"}<small>${left ? "souls to Lv3" : "done"}</small></div></div>
     <div class="now-meta"><span class="genus-tag" style="color:${gvar(p.genus)}">${esc(p.genus)}</span>
-      <span>${p.mob ? `${esc(p.mob)} in ${esc(p.zone || "an unknown zone")}` : "Chest or shop only"}</span>${wasted}</div>
+      <span>${nowWhere(p)}</span>${wasted}</div>
     ${levelBar(l, pts, p.genus)}<div class="seg-labels num">${labels}</div>
     ${others ? `<div class="also">${others}</div>` : ""}`;
+}
+
+// where to farm the pet: on the map picked in the filter if it can drop there, else its best mob anywhere
+function nowWhere(p) {
+  if (!p.mobs.length) return "Chest or shop only";
+  const here = mobsOn(p, cfg.map), m = here[0] || p.mobs[0];
+  const zone = zonesOn(m, here.length ? cfg.map : "")[0];
+  const map = here.length && cfg.map ? cfg.map : m.zones[0] && m.zones[0][1];
+  const where = [zone, map].filter(Boolean).map(esc).join(", ");
+  const more = p.mobs.length - 1;
+  return `${esc(m.name)}${where ? ` in ${where}` : ""}${more ? ` <em>+${more} more ${more === 1 ? "mob" : "mobs"}</em>` : ""}`;
 }
 
 function renderChips() {
@@ -61,23 +79,34 @@ function renderChips() {
       <span class="sw"></span>${label}<span class="count num">${n}</span></button>`;
   const open = p => remaining(p.id) > 0;
   $("chips").innerHTML = GENERA.map(g =>
-      chip(g, g, gvar(g), pets.filter(p => p.genus === g && p.mob && open(p)).length, !!cfg.genus[g])).join("") +
-    chip("no_mob", "Chest or shop", "var(--special)", pets.filter(p => !p.mob && open(p)).length, !!cfg.no_mob);
+      chip(g, g, gvar(g), pets.filter(p => p.genus === g && p.mobs.length && open(p)).length, !!cfg.genus[g])).join("") +
+    chip("no_mob", "Chest or shop", "var(--special)", pets.filter(p => !p.mobs.length && open(p)).length, !!cfg.no_mob);
 }
 
 function renderMapFilter() {
-  const maps = [...new Set(pets.map(p => p.map).filter(Boolean))].sort();
+  const maps = [...new Set(pets.flatMap(petMaps))].sort();
   const sel = $("map-filter");
   sel.innerHTML = `<option value="">All maps</option>` + maps.map(m => `<option>${esc(m)}</option>`).join("");
   sel.value = maps.includes(cfg.map) ? cfg.map : "";
 }
 
+// One row per pet and map it can be farmed on, so a pet whose mobs live on two maps shows under both.
+// map is "" for chest or shop pets and null for mobs MetaBot has no spawns for.
 function rows() {
   const q = ui.q.trim().toLowerCase();
-  return pets.filter(p => remaining(p.id) > 0)
-    .filter(p => p.mob ? cfg.genus[p.genus] : cfg.no_mob)
-    .filter(p => !cfg.map || p.map === cfg.map)
-    .filter(p => !q || `${p.name} ${p.mob || ""} ${p.zone || ""} ${p.map || ""}`.toLowerCase().includes(q));
+  const out = [];
+  for (const p of pets) {
+    if (remaining(p.id) <= 0 || !(p.mobs.length ? cfg.genus[p.genus] : cfg.no_mob)) continue;
+    const maps = p.mobs.length ? petMaps(p) : [""];
+    if (p.mobs.some(m => !m.zones.length)) maps.push(null);
+    for (const map of maps) {
+      if (cfg.map && map !== cfg.map) continue;
+      const mobs = map === null ? p.mobs.filter(m => !m.zones.length) : map ? mobsOn(p, map) : [];
+      const text = `${p.name} ${mobs.map(m => `${m.name} ${zonesOn(m, map).join(" ")}`).join(" ")} ${map || ""}`;
+      if (!q || text.toLowerCase().includes(q)) out.push({ p, map, mobs });
+    }
+  }
+  return out;
 }
 
 function renderList() {
@@ -87,20 +116,24 @@ function renderList() {
     return;
   }
   const groups = new Map();
-  for (const p of items) {
-    const k = p.map || (p.mob ? "Unknown map" : "Chest or shop");
+  for (const r of items) {
+    const k = r.map === null ? "Unknown map" : r.map || "Chest or shop";
     if (!groups.has(k)) groups.set(k, []);
-    groups.get(k).push(p);
+    groups.get(k).push(r);
   }
-  list.innerHTML = [...groups.entries()].sort((a, b) => b[1].length - a[1].length).map(([map, ps]) => {
-    ps.sort((a, b) => remaining(a.id) - remaining(b.id));
-    return `<div class="group-head">${esc(map)} <span class="num">${ps.length} ${ps.length === 1 ? "pet" : "pets"}</span></div>` +
-      ps.map(p => {
-        const [l, pts] = progress(p.id);
-        return `<div class="row${ui.flash.has(p.id) ? " flash" : ""}" role="option" tabindex="0" data-id="${p.id}" aria-selected="${ui.selected === p.id}" style="--g:${gvar(p.genus)}">
+  const sel = ui.selected;
+  list.innerHTML = [...groups.entries()].sort((a, b) => b[1].length - a[1].length).map(([title, rs]) => {
+    rs.sort((a, b) => remaining(a.p.id) - remaining(b.p.id));
+    return `<div class="group-head">${esc(title)} <span class="num">${rs.length} ${rs.length === 1 ? "pet" : "pets"}</span></div>` +
+      rs.map(({ p, map, mobs }) => {
+        const [l, pts] = progress(p.id), m = mobs[0], others = mobs.length - 1;
+        const zone = m ? zonesOn(m, map).join(", ") : "";
+        return `<div class="row${ui.flash.has(p.id) ? " flash" : ""}" role="option" tabindex="0" data-id="${p.id}" data-map="${map === null ? "-" : esc(map)}"
+            aria-selected="${!!sel && sel.id === p.id && sel.map === map}" style="--g:${gvar(p.genus)}">
           <span class="gdot" title="${esc(p.genus)}"></span><span class="pet">${esc(p.name)}</span>
-          <span class="mob">${p.mob ? `${esc(p.mob)} <em class="num">Lv ${p.lvl}</em>${p.more ? ` <em>+${p.more} more</em>` : ""}` : "Chest or shop"}</span>
-          <span class="zone">${esc(p.zone || "")}</span>
+          <span class="mob">${m ? `<span>${esc(m.name)} <em class="num">Lv ${m.lvl ?? "?"}</em>${chance(m)}</span>
+            <span class="zone">${esc(zone || "Spawn unknown")}${others ? ` <em>+${others} more ${others === 1 ? "mob" : "mobs"} here</em>` : ""}</span>`
+            : "<span>Chest or shop</span>"}</span>
           ${levelBar(l, pts, p.genus, true)}<span class="left num" title="Souls to Lv3">${remaining(p.id)}</span>
         </div>`;
       }).join("");
@@ -109,32 +142,49 @@ function renderList() {
   ui.flash.clear();
 }
 
+// Side panel for the clicked pet: every mob that drops it (the clicked map's first) and one mob's minimap.
 async function renderMap() {
-  const main = $("main"), el = $("map");
-  if (ui.selected === null || !byId.has(ui.selected)) { el.hidden = true; main.classList.remove("with-map"); return; }
-  const id = ui.selected, p = byId.get(id), s = p.spawn;
+  const main = $("main"), el = $("map"), sel = ui.selected;
+  if (!sel || !byId.has(sel.id)) { el.hidden = true; main.classList.remove("with-map"); return; }
+  const p = byId.get(sel.id);
   el.hidden = false; main.classList.add("with-map");
-  const where = [p.zone, p.map].filter(Boolean).map(esc).join(", ");
-  const head = `<div class="map-head"><div><h2>${p.mob ? `${esc(p.mob)}, Lv ${p.lvl}` : "Chest or shop"}</h2>${where ? `<p>${where}</p>` : ""}</div>
+  const head = `<div class="map-head"><div><h2>${esc(p.name)}</h2><p>${p.mobs.length
+      ? `Drops from ${p.mobs.length} ${p.mobs.length === 1 ? "mob" : "mobs"}` : "Doesn't drop from mobs"}</p></div>
       <button class="icon-btn" id="close-map" type="button" aria-label="Close map" title="Close map">
       <svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`;
+  if (!p.mobs.length) {
+    el.innerHTML = head + `<div class="view"><div class="note">This pet comes from chests or shops.</div></div>`;
+    return;
+  }
+  const away = i => sel.map ? !mobMaps(p.mobs[i]).includes(sel.map) : false;
+  const order = p.mobs.map((m, i) => i).sort((a, b) => away(a) - away(b));
+  const mobList = `<ol class="mobs">${order.map(i => {
+    const m = p.mobs[i];
+    const zones = m.zones.length ? m.zones.map(([zone, map, n]) =>
+      `<span>${esc(zone)}, ${esc(map)} <em class="num">${n} ${n === 1 ? "spawn" : "spawns"}</em></span>`).join("") : "<span>Spawn unknown</span>";
+    return `<li><button class="mob-opt" type="button" data-mob="${i}" aria-pressed="${ui.mob === i}" style="--g:${gvar(p.genus)}">
+      <b>${esc(m.name)} <em class="num">Lv ${m.lvl ?? "?"}</em>${chance(m)}</b>${zones}
+      ${m.kisk ? `<span class="kisk">Nearest Kibelisk: ${esc(m.kisk)}</span>` : ""}</button></li>`;
+  }).join("")}</ol>`;
+  const m = p.mobs[ui.mob], s = m.spawn, key = `${p.id}:${ui.mob}`;
+  const link = s && s.link ? `<span class="link" data-url="https://metabot.gg${esc(s.link)}">Open in MetaBot
+      <svg class="i" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M14 5h5v5M19 5l-8 8M18 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4"/></svg></span>` : "";
   if (!s || !s.dots.length) {
-    el.innerHTML = head + `<div class="view"><div class="note">${p.mob ? "MetaBot has no spawn points for this mob yet." : "This pet doesn't drop from mobs."}</div></div>`;
+    el.innerHTML = head + `<div class="view"><div class="note">${s ? `No minimap for ${esc(m.name)} here. Open MetaBot's map to see its spawns.`
+      : `MetaBot has no spawn points for ${esc(m.name)} yet.`}</div></div>${link ? `<div class="map-foot">${link}</div>` : ""}` + mobList;
     return;
   }
   const dots = s.dots.map(([x, y]) => `<span class="dot" style="left:${x}%;top:${y}%;--g:${gvar(p.genus)}"></span>`).join("");
-  const cached = ui.maps.get(id);
+  const cached = ui.maps.get(key);
   el.innerHTML = head + `<div class="view">${cached ? `<img src="${cached}" alt="">` : `<div class="note">Loading map…</div>`}${dots}</div>
-    <div class="map-foot"><span class="num">${s.dots.length} spawn points</span>
-    ${s.link ? `<span class="link" data-url="https://metabot.gg${esc(s.link)}">Open in MetaBot
-      <svg class="i" viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M14 5h5v5M19 5l-8 8M18 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4"/></svg></span>` : ""}</div>`;
+    <div class="map-foot"><span class="num">${s.dots.length} spawn points${s.map ? ` on ${esc(s.map)}` : ""}</span>${link}</div>` + mobList;
   if (cached) return;
   let uri = null;
-  try { uri = await api.get_map(id); } catch (e) { console.error(e); }
-  if (ui.selected !== id) return; // another row was clicked meanwhile
+  try { uri = await api.get_map(p.id, ui.mob); } catch (e) { console.error(e); }
+  if (!ui.selected || `${ui.selected.id}:${ui.mob}` !== key) return; // another row or mob was clicked meanwhile
   const view = el.querySelector(".view");
   if (!uri) { view.querySelector(".note").textContent = "Map unavailable. Check your internet connection."; return; }
-  ui.maps.set(id, uri);
+  ui.maps.set(key, uri);
   view.querySelector(".note").outerHTML = `<img src="${uri}" alt="">`;
 }
 
@@ -182,7 +232,7 @@ window.app = {
   setState(next) {
     state = next;
     render();
-    if (ui.selected !== null && !$("map").hidden) renderMap();
+    if (ui.selected && !$("map").hidden) renderMap();
   },
   flash(id) { ui.flash.add(id); },
   setSettings(next) { cfg = next; applySettings(); },
@@ -229,8 +279,17 @@ document.addEventListener("click", e => {
   if (t.closest("#move-toast")) { api.place_toast(); return; }
   const opt = t.closest(".seg-opt");
   if (opt && opt.dataset.mode !== cfg.mode) { save({ mode: opt.dataset.mode }); return; }
+  const mob = t.closest("[data-mob]");
+  if (mob) { ui.mob = +mob.dataset.mob; renderMap(); return; }
   const row = t.closest(".row");
-  if (row) { const id = +row.dataset.id; ui.selected = ui.selected === id ? null : id; renderList(); renderMap(); }
+  if (row) {
+    const id = +row.dataset.id, map = row.dataset.map === "-" ? null : row.dataset.map, p = byId.get(id);
+    const same = ui.selected && ui.selected.id === id && ui.selected.map === map;
+    ui.selected = same ? null : { id, map };
+    // open on the first mob of the clicked map (or, under "Unknown map", the first without spawns)
+    if (!same) ui.mob = Math.max(0, p.mobs.findIndex(m => map ? mobMaps(m).includes(map) : !m.zones.length));
+    renderList(); renderMap();
+  }
 });
 document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches(".row")) e.target.click(); });
 $("q").addEventListener("input", e => { ui.q = e.target.value; renderList(); });

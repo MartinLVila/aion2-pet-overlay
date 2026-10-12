@@ -101,8 +101,10 @@ def main():
     payload = json.loads(json.dumps(app.ui_payload()))  # must survive the trip to the page
     assert len(payload["pets"]) == len(pet_overlay.PETS) and payload["state"]["levels"]["1005"] == 2
     assert "tiles" not in json.dumps(payload["pets"])
-    mapped = next(pid for pid, p in pet_overlay.PETS.items() if p.get("spawn") and p["spawn"]["dots"])
-    assert app.map_uri(mapped).startswith("data:image/webp;base64,")  # tiles from check_map's fake fetcher
+    mapped = next((pid, i) for pid, p in pet_overlay.PETS.items() for i, m in enumerate(p["mobs"])
+                  if i and m["spawn"] and m["spawn"]["dots"])  # a pet's second (or later) mob
+    assert app.map_uri(*mapped).startswith("data:image/webp;base64,")  # tiles from check_map's fake fetcher
+    assert app.map_uri(mapped[0], 99) is None
     app.update_settings({"opacity": 5, "mode": "nope", "toast_time": 8, "geometry": {"overlay": [0, 0, 1, 1]}})
     assert (app.settings["opacity"], app.settings["mode"], app.settings["toast_time"]) == (50, "overlay", 8)
     assert app.settings["geometry"]["overlay"] != [0, 0, 1, 1]
@@ -137,9 +139,13 @@ def check_map():
     """Spawn data is bundled and the minimap renders, using a fake tile instead of the network."""
     from PIL import Image
     import pet_map
-    farmable = [p for p in pet_overlay.PETS.values() if p.get("mob")]
-    with_spawn = [p for p in farmable if p.get("spawn") and p["spawn"]["dots"]]
+    farmable = [p for p in pet_overlay.PETS.values() if pet_overlay.is_farmable(p)]
+    with_spawn = [p for p in farmable if any(m["spawn"] and m["spawn"]["dots"] for m in p["mobs"])]
     assert len(with_spawn) >= len(farmable) * 0.8, (len(with_spawn), len(farmable))
+    # pets whose souls drop on several maps must list every mob, e.g. Superior Fire Spirit on Altgard and Verteron
+    fire = next(p for p in pet_overlay.PETS.values() if p["name"] == "Superior Fire Spirit")
+    assert {"Immortal Fire Spirit Guardian", "Hellfire Spirit"} <= {m["name"] for m in fire["mobs"]}
+    assert {z[1] for m in fire["mobs"] for z in m["zones"]} >= {"Altgard", "Verteron"}
     pet_map.fetch_tile = lambda path: Image.new("RGB", (256, 256), "#406040")
     img = pet_map.render({"tiles": [["/t.webp", 0, 0, 50, 50]], "dots": [[75, 75]]})
     assert img.size == (pet_map.WIDTH, pet_map.HEIGHT)
